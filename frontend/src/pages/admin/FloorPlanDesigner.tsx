@@ -1,293 +1,360 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Plus, Download, Save, RotateCcw, Trash2 } from 'lucide-react';
-import GlassCard from '../../components/ui/GlassCard';
+// File: src/pages/admin/FloorPlanDesigner.tsx
+// -----------------------------------------------------------------------------
+// Floor-plan designer – full-canvas soft blueprint, smooth pan & zoom
+// -----------------------------------------------------------------------------
+
+import React, { useRef, useState, useEffect } from 'react';
+import { nanoid } from 'nanoid';
+import DraggableBox from '../../components/floorplan/DraggableBox';
 import Button from '../../components/ui/Button';
+import {
+  ChevronLeft, ChevronRight, ChevronUp, ChevronDown,
+  Trash, Link2,
+} from 'lucide-react';
+import { Shelf, ShelfType, Zone, Road } from '../../types';
 import { mockShelves, mockZones } from '../../data/mockData';
-import { Shelf } from '../../types';
 
-const FloorPlanDesigner = () => {
+/* ─── constants ─── */
+const PAVER = 32;
+const P_FILL = '#b4b8bd';
+const P_EDGE = '#2f2f2f';
+
+const shelfDefs: Record<ShelfType, { name: string; color: string }> = {
+  aisle:    { name: 'Aisle',    color: '#00D3FF' },
+  endcap:   { name: 'End Cap',  color: '#FFB547' },
+  island:   { name: 'Island',   color: '#8B5CF6' },
+  checkout: { name: 'Checkout', color: '#EF4444' },
+};
+
+const zonePalette = [
+  { name: 'Entrance',        color: '#00D3FF' },
+  { name: 'Grocery',         color: '#10B981' },
+  { name: 'Snacks',          color: '#FACC15' },
+  { name: 'Electronics',     color: '#8B5CF6' },
+  { name: 'Health & Beauty', color: '#EF4444' },
+];
+
+/* ─── helper: collect connected pavers ─── */
+function collectRoad(start: string, list: Road[]) {
+  const map = new Map(list.map(p => [p.id, p]));
+  const out = new Set<string>();
+  const stack = [start];
+  while (stack.length) {
+    const id = stack.pop()!;
+    if (out.has(id)) continue;
+    out.add(id);
+    const p = map.get(id);
+    if (!p) continue;
+    for (const q of list) {
+      if (out.has(q.id)) continue;
+      const touching =
+        (Math.abs(q.x - p.x) === PAVER && q.y === p.y) ||
+        (Math.abs(q.y - p.y) === PAVER && q.x === p.x);
+      if (touching) stack.push(q.id);
+    }
+  }
+  return [...out];
+}
+
+/* ─── component ─── */
+export default function FloorPlanDesigner() {
+  /* entities */
   const [shelves, setShelves] = useState<Shelf[]>(mockShelves);
-  const [selectedShelf, setSelectedShelf] = useState<Shelf | null>(null);
-  const [showShelfPalette, setShowShelfPalette] = useState(true);
+  const [zones,   setZones]   = useState<Zone[]>(mockZones);
+  const [roads,   setRoads]   = useState<Road[]>([]);
 
-  const shelfTypes = [
-    { type: 'aisle', name: 'Aisle Shelf', color: '#00D3FF', width: 120, height: 40 },
-    { type: 'endcap', name: 'End Cap', color: '#FFB547', width: 80, height: 60 },
-    { type: 'island', name: 'Promo Island', color: '#8B5CF6', width: 100, height: 80 },
-    { type: 'checkout', name: 'Checkout', color: '#EF4444', width: 60, height: 40 },
-  ];
+  /* counters */
+  const shelfN = useRef(mockShelves.length + 1);
+  const zoneN  = useRef(1);
 
-  const addShelf = (type: Shelf['type']) => {
-    const newShelf: Shelf = {
-      id: `shelf-${Date.now()}`,
-      type,
-      x: 50,
-      y: 50,
-      width: shelfTypes.find(t => t.type === type)?.width || 120,
-      height: shelfTypes.find(t => t.type === type)?.height || 40,
-      zone: 'unassigned',
-      capacity: 50,
-      products: []
-    };
-    setShelves([...shelves, newShelf]);
+  /* selection */
+  const [selShelf,   setSelShelf]   = useState<Shelf|null>(null);
+  const [selZoneId,  setSelZoneId]  = useState<string|null>(null);
+  const [selRoadId,  setSelRoadId]  = useState<string|null>(null);
+  const [roadGroup,  setRoadGroup]  = useState<string[]>([]);
+
+  /* first road placement */
+  const [placingRoad, setPlacingRoad] = useState(false);
+
+  /* pan / zoom */
+  const [scale,  setScale]  = useState(1);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [panning, setPanning] = useState(false);
+  const panStart = useRef({ x: 0, y: 0 });
+  const canvasRef = useRef<HTMLDivElement>(null);
+
+  /* block ctrl-wheel page zoom */
+  useEffect(() => {
+    const stop = (e: WheelEvent) => { if (e.ctrlKey) e.preventDefault(); };
+    window.addEventListener('wheel', stop, { passive: false });
+    return () => window.removeEventListener('wheel', stop);
+  }, []);
+
+  /* ── wheel zoom ─ */
+  const onWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    const factor = 1 - e.deltaY / 600;
+    const next   = Math.max(0.4, Math.min(3, scale * factor));
+    if (next === scale) return;
+
+    const rect = canvasRef.current!.getBoundingClientRect();
+    const px = e.clientX - rect.left - offset.x;
+    const py = e.clientY - rect.top  - offset.y;
+    const z  = next / scale;
+
+    setOffset({ x: offset.x + px - px*z, y: offset.y + py - py*z });
+    setScale(next);
   };
 
-  const deleteShelf = (shelfId: string) => {
-    setShelves(shelves.filter(s => s.id !== shelfId));
-    if (selectedShelf?.id === shelfId) {
-      setSelectedShelf(null);
+  /* ── pan (any left-drag on empty canvas) ─ */
+  const startPan = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest('[data-draggable="true"]')) return;
+    if (e.button !== 0) return;       // primary / touchpad click
+    e.preventDefault();
+    setPanning(true);
+    panStart.current = { x: e.clientX - offset.x, y: e.clientY - offset.y };
+    document.body.style.cursor = 'grabbing';
+  };
+  const doPan  = (e: React.MouseEvent) =>
+    panning && setOffset({ x: e.clientX - panStart.current.x, y: e.clientY - panStart.current.y });
+  const endPan = () => { setPanning(false); document.body.style.cursor = 'default'; };
+
+  /* ── entity updaters ─ */
+  const updShelf = (s:Shelf) => setShelves(a => a.map(t => t.id===s.id? s:t));
+  const updZone  = (z:Zone)  => setZones  (a => a.map(t => t.id===z.id? z:t));
+  const updRoad  = (r:Road)  => setRoads  (a => a.map(t => t.id===r.id? r:t));
+
+  const clearSel = (keep:'shelf'|'zone'|'road'|'none') => {
+    if (keep!=='shelf') setSelShelf(null);
+    if (keep!=='zone')  setSelZoneId(null);
+    if (keep!=='road')  { setSelRoadId(null); setRoadGroup([]); }
+  };
+
+  /* ── palette actions ─ */
+  const addShelf = (t: ShelfType) =>
+    setShelves(a => [...a,{
+      id:nanoid(), label:`#${shelfN.current++}`, type:t,
+      x:80, y:80, width:120, height:40, zone:'unassigned', capacity:50, products:[],
+    }]);
+
+  const addZone = (name:string, color:string) =>
+    setZones(a => [...a,{
+      id:`zone-${zoneN.current++}`, name, color,
+      x:100, y:100, width:180, height:140,
+    }]);
+
+  /* ── road placement & extension ─ */
+  const placeRoadStart = (e: React.MouseEvent) => {
+    if (!placingRoad || !canvasRef.current) return;
+    const rect = canvasRef.current.getBoundingClientRect();
+    const wx = (e.clientX - rect.left - offset.x) / scale;
+    const wy = (e.clientY - rect.top  - offset.y) / scale;
+    const r:Road = { id:nanoid(), x:wx-PAVER/2, y:wy-PAVER/2, width:PAVER, height:PAVER };
+    setRoads(a => [...a,r]);
+    setSelRoadId(r.id); setRoadGroup([]);
+    setPlacingRoad(false); clearSel('road');
+  };
+  const extendRoad = (dir:'up'|'down'|'left'|'right') => {
+    if (!selRoadId) return;
+    const b = roads.find(r => r.id===selRoadId)!;
+    const r:Road = {
+      id:nanoid(),
+      x: dir==='left'? b.x-PAVER : dir==='right'? b.x+PAVER : b.x,
+      y: dir==='up'?   b.y-PAVER : dir==='down'?  b.y+PAVER : b.y,
+      width:PAVER, height:PAVER,
+    };
+    setRoads(a => [...a,r]);
+    setSelRoadId(r.id); setRoadGroup([]);
+  };
+
+  /* ── delete ─ */
+  const deleteSel = () => {
+    if (selShelf)        { setShelves(shelves.filter(s => s.id!==selShelf.id));  setSelShelf(null); }
+    else if (selZoneId)  { setZones  (zones.filter(z  => z.id!==selZoneId));     setSelZoneId(null);}
+    else if (roadGroup.length) {
+      setRoads(roads.filter(r => !roadGroup.includes(r.id)));
+      setSelRoadId(null); setRoadGroup([]);
+    } else if (selRoadId) {
+      setRoads(roads.filter(r => r.id!==selRoadId)); setSelRoadId(null);
     }
   };
 
-  const updateShelf = (updatedShelf: Shelf) => {
-    setShelves(shelves.map(s => s.id === updatedShelf.id ? updatedShelf : s));
-    setSelectedShelf(updatedShelf);
-  };
-
+  /* ───────── JSX ───────── */
   return (
-    <div className="h-full flex">
-      {/* Shelf Palette */}
-      <motion.div
-        className="w-80 bg-glass backdrop-blur-md border-r border-glass p-4 space-y-4"
-        initial={{ x: -320 }}
-        animate={{ x: showShelfPalette ? 0 : -320 }}
-      >
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Shelf Palette</h2>
-          <Button size="sm" onClick={() => setShowShelfPalette(!showShelfPalette)}>
-            {showShelfPalette ? '←' : '→'}
+    <div className="h-full flex overflow-hidden select-none">
+      {/* PALETTE ----------------------------------------------------------- */}
+      <aside className="w-64 bg-glass p-4 space-y-3 overflow-y-auto
+                         scrollbar-thin scrollbar-thumb-gray-700">
+        <h2 className="font-bold">Palette</h2>
+        {Object.keys(shelfDefs).map(t => (
+          <Button key={t} className="w-full" onClick={() => addShelf(t as ShelfType)}>
+            + {shelfDefs[t as ShelfType].name}
           </Button>
-        </div>
+        ))}
+        <h3 className="font-semibold mt-2">Sections</h3>
+        {zonePalette.map(z => (
+          <Button key={z.name} variant="secondary" className="w-full"
+                  onClick={() => addZone(z.name, z.color)}>
+            + {z.name}
+          </Button>
+        ))}
+        <Button variant={placingRoad?'primary':'secondary'} className="w-full mt-3"
+                onClick={() => { setPlacingRoad(!placingRoad); clearSel('none'); }}>
+          {placingRoad ? 'Cancel Path' : 'Add Path'}
+        </Button>
 
-        <div className="space-y-3">
-          {shelfTypes.map((shelfType) => (
-            <motion.div
-              key={shelfType.type}
-              className="p-4 bg-glass rounded-xl cursor-pointer hover:bg-white hover:bg-opacity-10 transition-all"
-              whileHover={{ scale: 1.02 }}
-              onClick={() => addShelf(shelfType.type as Shelf['type'])}
-            >
-              <div className="flex items-center space-x-3">
-                <div
-                  className="w-8 h-6 rounded"
-                  style={{ backgroundColor: shelfType.color }}
-                />
-                <div>
-                  <p className="font-medium">{shelfType.name}</p>
-                  <p className="text-sm text-gray-400">{shelfType.width}×{shelfType.height}px</p>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        <div className="pt-4 border-t border-glass">
-          <h3 className="font-medium mb-3">Actions</h3>
-          <div className="space-y-2">
-            <Button variant="secondary" size="sm" icon={Save} className="w-full">
-              Save Layout
+        {selRoadId && (
+          <div className="grid grid-cols-3 gap-0.5 w-max mx-auto mt-3">
+            <div/>
+            <Button variant="secondary" className="w-10 h-10 rounded-b-none"
+                    onClick={() => extendRoad('up')}><ChevronUp size={18}/></Button>
+            <div/>
+            <Button variant="secondary" className="w-10 h-10 rounded-r-none"
+                    onClick={() => extendRoad('left')}><ChevronLeft size={18}/></Button>
+            <Button variant="secondary" className="w-10 h-10"
+                    onClick={() => setRoadGroup(collectRoad(selRoadId, roads))}>
+              <Link2 size={16}/>
             </Button>
-            <Button variant="secondary" size="sm" icon={Download} className="w-full">
-              Export QR Pack
-            </Button>
-            <Button variant="secondary" size="sm" icon={RotateCcw} className="w-full">
-              Reset Layout
-            </Button>
+            <Button variant="secondary" className="w-10 h-10 rounded-l-none"
+                    onClick={() => extendRoad('right')}><ChevronRight size={18}/></Button>
+            <div/>
+            <Button variant="secondary" className="w-10 h-10 rounded-t-none"
+                    onClick={() => extendRoad('down')}><ChevronDown size={18}/></Button>
+            <div/>
           </div>
-        </div>
-      </motion.div>
+        )}
 
-      {/* Main Canvas */}
-      <div className="flex-1 flex flex-col">
-        <div className="h-16 bg-glass backdrop-blur-md border-b border-glass flex items-center justify-between px-6">
-          <h1 className="text-xl font-semibold">Floor Plan Designer</h1>
-          <div className="flex items-center space-x-3">
-            <span className="text-sm text-gray-400">{shelves.length} shelves</span>
-            <Button variant="primary" size="sm">
-              Save Changes
-            </Button>
-          </div>
-        </div>
+        {(selShelf || selZoneId || selRoadId) && (
+          <Button className="w-full mt-3 flex items-center justify-center gap-2
+                             bg-red-600 hover:bg-red-700 text-white"
+                  onClick={deleteSel}>
+            <Trash size={16}/> Delete
+          </Button>
+        )}
+      </aside>
 
-        <div className="flex-1 relative overflow-hidden bg-gray-900">
-          {/* Grid Background */}
-          <div className="absolute inset-0 opacity-10">
-            <svg width="100%" height="100%">
-              <defs>
-                <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-                  <path d="M 20 0 L 0 0 0 20" fill="none" stroke="white" strokeWidth="0.5"/>
-                </pattern>
-              </defs>
-              <rect width="100%" height="100%" fill="url(#grid)" />
-            </svg>
-          </div>
+      {/* CANVAS WRAPPER ---------------------------------------------------- */}
+      <div
+        className="flex-1 relative overflow-hidden bg-[#0C1C33]"
+        onWheel={onWheel}
+        onMouseDown={startPan}
+        onMouseMove={doPan}
+        onMouseUp={endPan}
+        onMouseLeave={endPan}
+        onContextMenu={e => e.preventDefault()}
+      >
+        {/* blueprint grid (soft lines) */}
+        <div
+          className="absolute inset-0 z-0 pointer-events-none"
+          style={{
+            backgroundImage: `
+              repeating-linear-gradient(0deg , transparent 0 19px , #153055 19px 20px),
+              repeating-linear-gradient(90deg, transparent 0 19px , #153055 19px 20px),
+              repeating-linear-gradient(0deg , transparent 0 99px , #1d3b63 99px 100px),
+              repeating-linear-gradient(90deg, transparent 0 99px , #1d3b63 99px 100px)
+            `,
+            backgroundSize: '20px 20px, 20px 20px, 100px 100px, 100px 100px',
+          }}
+        />
+        {/* grain */}
+        <div
+          className="absolute inset-0 z-0 pointer-events-none opacity-[0.03]"
+          style={{
+            backgroundImage:
+              'url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAIAAABMXPacAAAAGUlEQVR4nO3BAQ0AAADCoPdPbQ43oAAAAAAAAACAf8YBAAB+fAsGAAAAAElFTkSuQmCC")',
+          }}
+        />
 
-          {/* Zones */}
-          {mockZones.map((zone) => (
-            <div
-              key={zone.id}
-              className="absolute border border-dashed border-opacity-50 rounded-lg"
+        {/* pan/zoom container */}
+        <div
+          ref={canvasRef}
+          className="relative w-full h-full overflow-visible z-10"
+          onClick={placeRoadStart}
+          style={{
+            transform: `translate(${offset.x}px,${offset.y}px) scale(${scale})`,
+            transformOrigin: '0 0',
+            transition: 'transform 80ms ease-out',
+          }}
+        >
+          {/* ZONES (z 10) */}
+          {zones.map(z => (
+            <DraggableBox key={z.id} id={z.id} scale={scale} data-draggable="true"
+              x={z.x} y={z.y} w={z.width} h={z.height}
+              selected={selZoneId===z.id}
+              onSelect={() => { setSelZoneId(z.id); clearSel('zone'); }}
+              onChange={(id,nx,ny,nw,nh)=>updZone({ ...z,x:nx,y:ny,width:nw,height:nh })}
               style={{
-                left: zone.bounds.x,
-                top: zone.bounds.y,
-                width: zone.bounds.width,
-                height: zone.bounds.height,
-                borderColor: zone.color,
-                backgroundColor: zone.color + '20'
-              }}
-            >
-              <div 
-                className="absolute -top-6 left-2 text-xs font-medium px-2 py-1 rounded"
-                style={{ backgroundColor: zone.color, color: '#101014' }}
-              >
-                {zone.name}
+                background:`${z.color}33`,
+                border:`2px dashed ${selZoneId===z.id? '#38bdf8': z.color}`,
+                zIndex:10,
+              }}>
+              <div className="absolute inset-0 flex items-center justify-center
+                              text-xs font-semibold pointer-events-none"
+                   style={{ color: selZoneId===z.id? '#38bdf8': z.color }}>
+                {z.name}
               </div>
-            </div>
+            </DraggableBox>
           ))}
 
-          {/* Shelves */}
-          {shelves.map((shelf) => {
-            const shelfType = shelfTypes.find(t => t.type === shelf.type);
+          {/* SHELVES (z 20) */}
+          {shelves.map(s => (
+            <DraggableBox key={s.id} id={s.id} scale={scale} data-draggable="true"
+              x={s.x} y={s.y} w={s.width} h={s.height}
+              selected={selShelf?.id===s.id}
+              onSelect={()=>{ setSelShelf(s); clearSel('shelf'); }}
+              onChange={(id,nx,ny,nw,nh)=>updShelf({ ...s,x:nx,y:ny,width:nw,height:nh })}
+              style={{
+                background:`linear-gradient(135deg, ${shelfDefs[s.type].color} 0%, #ffffff33 100%)`,
+                zIndex:20,
+              }}>
+              <div className="absolute inset-0 flex items-center justify-center
+                              text-white/90 text-xs font-bold pointer-events-none">
+                {s.label}
+              </div>
+            </DraggableBox>
+          ))}
+
+          {/* ROADS (z 30) */}
+          {roads.map(r => {
+            const sel = selRoadId===r.id || roadGroup.includes(r.id);
             return (
-              <motion.div
-                key={shelf.id}
-                className={`absolute cursor-pointer rounded shadow-lg ${
-                  selectedShelf?.id === shelf.id ? 'ring-2 ring-accent' : ''
-                }`}
+              <DraggableBox key={r.id} id={r.id} scale={scale} data-draggable="true"
+                x={r.x} y={r.y} w={r.width} h={r.height}
+                selected={sel}
+                onSelect={()=>{ setSelRoadId(r.id); setRoadGroup([]); clearSel('road'); }}
+                onChange={(id,nx,ny)=>{
+                  if (roadGroup.length>1) {
+                    const dx = nx - r.x, dy = ny - r.y;
+                    setRoads(list => list.map(t =>
+                      roadGroup.includes(t.id)?{...t,x:t.x+dx,y:t.y+dy}:t));
+                  } else updRoad({ ...r,x:nx,y:ny });
+                }}
                 style={{
-                  left: shelf.x,
-                  top: shelf.y,
-                  width: shelf.width,
-                  height: shelf.height,
-                  backgroundColor: shelfType?.color,
-                }}
-                drag
-                dragMomentum={false}
-                onDragEnd={(_, info) => {
-                  updateShelf({
-                    ...shelf,
-                    x: Math.max(0, shelf.x + info.offset.x),
-                    y: Math.max(0, shelf.y + info.offset.y)
-                  });
-                }}
-                onClick={() => setSelectedShelf(shelf)}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <div className="w-full h-full flex items-center justify-center text-primary text-xs font-medium">
-                  {shelf.id.split('-')[1]}
-                </div>
-              </motion.div>
+                  background:P_FILL, border:`3px solid ${P_EDGE}`, borderRadius:4,
+                  boxShadow: sel
+                    ? '0 0 6px 2px #38bdf8, 0 2px 6px #0006'
+                    : '0 2px 4px #0004',
+                  transition:'box-shadow .15s',
+                  zIndex:30,
+                }}/>
             );
           })}
         </div>
       </div>
 
-      {/* Properties Panel */}
-      {selectedShelf && (
-        <motion.div
-          className="w-80 bg-glass backdrop-blur-md border-l border-glass p-4 space-y-4"
-          initial={{ x: 320 }}
-          animate={{ x: 0 }}
-        >
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold">Properties</h2>
-            <Button
-              variant="secondary"
-              size="sm"
-              icon={Trash2}
-              onClick={() => deleteShelf(selectedShelf.id)}
-            >
-              Delete
-            </Button>
-          </div>
-
-          <GlassCard className="p-4">
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Shelf ID</label>
-                <input
-                  type="text"
-                  value={selectedShelf.id}
-                  className="w-full px-3 py-2 bg-glass rounded-lg border border-glass focus:border-accent focus:outline-none"
-                  readOnly
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Type</label>
-                <select
-                  value={selectedShelf.type}
-                  onChange={(e) => updateShelf({ ...selectedShelf, type: e.target.value as Shelf['type'] })}
-                  className="w-full px-3 py-2 bg-glass rounded-lg border border-glass focus:border-accent focus:outline-none"
-                >
-                  {shelfTypes.map((type) => (
-                    <option key={type.type} value={type.type}>{type.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Zone</label>
-                <select
-                  value={selectedShelf.zone}
-                  onChange={(e) => updateShelf({ ...selectedShelf, zone: e.target.value })}
-                  className="w-full px-3 py-2 bg-glass rounded-lg border border-glass focus:border-accent focus:outline-none"
-                >
-                  <option value="unassigned">Unassigned</option>
-                  {mockZones.map((zone) => (
-                    <option key={zone.id} value={zone.id}>{zone.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Capacity</label>
-                <input
-                  type="number"
-                  value={selectedShelf.capacity}
-                  onChange={(e) => updateShelf({ ...selectedShelf, capacity: parseInt(e.target.value) })}
-                  className="w-full px-3 py-2 bg-glass rounded-lg border border-glass focus:border-accent focus:outline-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Width</label>
-                  <input
-                    type="number"
-                    value={selectedShelf.width}
-                    onChange={(e) => updateShelf({ ...selectedShelf, width: parseInt(e.target.value) })}
-                    className="w-full px-3 py-2 bg-glass rounded-lg border border-glass focus:border-accent focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Height</label>
-                  <input
-                    type="number"
-                    value={selectedShelf.height}
-                    onChange={(e) => updateShelf({ ...selectedShelf, height: parseInt(e.target.value) })}
-                    className="w-full px-3 py-2 bg-glass rounded-lg border border-glass focus:border-accent focus:outline-none"
-                  />
-                </div>
-              </div>
-            </div>
-          </GlassCard>
-
-          <div className="space-y-2">
-            <h3 className="font-medium">Quick Actions</h3>
-            <Button variant="secondary" size="sm" className="w-full">
-              Assign Products
-            </Button>
-            <Button variant="secondary" size="sm" className="w-full">
-              View Analytics
-            </Button>
-          </div>
-        </motion.div>
+      {/* SHELF side-panel -------------------------------------------------- */}
+      {selShelf && (
+        <div className="w-72 bg-glass border-l border-glass p-4 space-y-3">
+          <h3 className="font-bold">Shelf</h3>
+          <label className="text-xs">Label</label>
+          <input className="w-full bg-glass border border-glass px-2 py-1 rounded"
+                 value={selShelf.label}
+                 onChange={e => updShelf({ ...selShelf, label: e.target.value })}/>
+          <Button variant="secondary" className="w-full" onClick={() => setSelShelf(null)}>
+            Close
+          </Button>
+        </div>
       )}
     </div>
   );
-};
-
-export default FloorPlanDesigner;
+}
