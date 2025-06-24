@@ -1,22 +1,27 @@
 // -----------------------------------------------------------------------------
 // Floor-plan Designer
 // – Blueprint grid, smooth pan/zoom
-// – Saves ONE layout to /api/layout (overwrites each time)
-// – Loads that layout automatically on page refresh or server restart
+// – ONE persisted layout (PUT /api/layout, GET /api/layout)
+// – Per-type auto-increment labels (Aisle 1, End Cap 1 …)
+// – Shelf side-panel: add / edit products (+ quantity) with live search
 // -----------------------------------------------------------------------------
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { nanoid } from 'nanoid';
 import DraggableBox from '../../components/floorplan/DraggableBox';
 import Button from '../../components/ui/Button';
 import {
   ChevronLeft, ChevronRight, ChevronUp, ChevronDown,
-  Trash, Link2,
+  Trash, Link2, X,
 } from 'lucide-react';
-import { Shelf, ShelfType, Zone, Road } from '../../types';
-import { mockShelves, mockZones } from '../../data/mockData';
+import {
+  Shelf, ShelfType, Zone, Road,
+} from '../../types';
+import {
+  mockShelves, mockZones, mockProducts,
+} from '../../data/mockData';
 
-/* ─── constants ─── */
+/* ─── visual constants ─── */
 const PAVER   = 32;
 const P_FILL  = '#b4b8bd';
 const P_EDGE  = '#2f2f2f';
@@ -36,12 +41,13 @@ const zonePalette = [
   { name: 'Health & Beauty', color: '#EF4444' },
 ];
 
-/* ─── helper: collect connected road tiles ─── */
+/* ─── tiny helpers ─── */
+type ShelfProduct = { productId: string; qty: number };
+
 function collectRoad(start: string, list: Road[]): string[] {
   const map = new Map(list.map(p => [p.id, p]));
   const out = new Set<string>();
   const stack = [start];
-
   while (stack.length) {
     const id = stack.pop()!;
     if (out.has(id)) continue;
@@ -66,9 +72,17 @@ export default function FloorPlanDesigner() {
   const [zones,   setZones]   = useState<Zone[]>(mockZones);
   const [roads,   setRoads]   = useState<Road[]>([]);
 
-  /* counters for new IDs */
-  const shelfN = useRef(mockShelves.length + 1);
-  const zoneN  = useRef(1);
+  /* per-type counters for clean labels */
+  const shelfCounters = useRef<Record<ShelfType, number>>({
+    aisle: 1, endcap: 1, island: 1, checkout: 1,
+  });
+  /* initialise counters from existing mock data once */
+  useEffect(() => {
+    const c = { ...shelfCounters.current };
+    shelves.forEach(s => (c[s.type] = Math.max(c[s.type], c[s.type] + 1)));
+    shelfCounters.current = c;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // run once
 
   /* selections */
   const [selShelf,   setSelShelf]   = useState<Shelf|null>(null);
@@ -104,9 +118,7 @@ export default function FloorPlanDesigner() {
         setZones(l.zones);
         setRoads(l.roads);
       })
-      .catch(() => {
-        /* no saved layout yet: keep mock data */
-      });
+      .catch(() => {/* no saved layout yet */});
   }, []);
 
   /* ─── wheel-zoom ─── */
@@ -115,12 +127,10 @@ export default function FloorPlanDesigner() {
     const factor = 1 - e.deltaY / 600;
     const next   = Math.min(3, Math.max(0.4, scale * factor));
     if (next === scale) return;
-
     const rect = canvasRef.current!.getBoundingClientRect();
     const px = e.clientX - rect.left - offset.x;
     const py = e.clientY - rect.top  - offset.y;
     const z  = next / scale;
-
     setOffset({ x: offset.x + px - px*z, y: offset.y + py - py*z });
     setScale(next);
   };
@@ -140,15 +150,18 @@ export default function FloorPlanDesigner() {
 
   /* ─── create helpers ─── */
   const addShelf = (t: ShelfType) =>
-    setShelves(a => [...a, {
-      id:nanoid(), label:`#${shelfN.current++}`, type:t,
-      x:80, y:80, width:120, height:40,
-      zone:'unassigned', capacity:50, products:[],
-    }]);
+    setShelves(a => {
+      const label = `${shelfDefs[t].name} ${shelfCounters.current[t]++}`;
+      return [...a, {
+        id:nanoid(), type:t, label,
+        x:80, y:80, width:120, height:40,
+        zone:'unassigned', capacity:50, products: [] as ShelfProduct[],
+      }];
+    });
 
   const addZone = (name:string, color:string) =>
     setZones(a => [...a, {
-      id:`zone-${zoneN.current++}`, name, color,
+      id:`zone-${nanoid()}`, name, color,
       x:100, y:100, width:180, height:140,
     }]);
 
@@ -180,9 +193,9 @@ export default function FloorPlanDesigner() {
   };
 
   /* ─── update helpers ─── */
-  const updShelf = (s:Shelf) => setShelves(a => a.map(t => t.id===s.id? s:t));
-  const updZone  = (z:Zone)  => setZones  (a => a.map(t => t.id===z.id? z:t));
-  const updRoad  = (r:Road)  => setRoads  (a => a.map(t => t.id===r.id? r:t));
+  const updShelf = (s:Shelf)  => setShelves(a => a.map(t => t.id===s.id? s:t));
+  const updZone  = (z:Zone)   => setZones  (a => a.map(t => t.id===z.id? z:t));
+  const updRoad  = (r:Road)   => setRoads  (a => a.map(t => t.id===r.id? r:t));
 
   /* ─── delete helpers ─── */
   const deleteSel = () => {
@@ -224,6 +237,49 @@ export default function FloorPlanDesigner() {
     } catch (err:any) {
       alert(`Save failed: ${err.message}`);
     }
+  };
+
+  /* ─── Shelf side-panel: search & add products ─── */
+  const [query, setQuery] = useState('');
+  const suggestions = useMemo(() => (
+    query.trim()
+      ? mockProducts.filter(p =>
+          p.name.toLowerCase().includes(query.toLowerCase()))
+      : []
+  ), [query]);
+
+  const addProdToShelf = (prodId: string) => {
+    if (!selShelf) return;
+    const target = shelves.find(s => s.id === selShelf.id)!;
+    const existing = (target.products as ShelfProduct[])
+      .find(p => p.productId === prodId);
+    let newProds: ShelfProduct[];
+    if (existing) {
+      newProds = (target.products as ShelfProduct[])
+        .map(p => p.productId === prodId ? { ...p, qty: p.qty + 1 } : p);
+    } else {
+      newProds = [...(target.products as ShelfProduct[]), { productId: prodId, qty: 1 }];
+    }
+    updShelf({ ...target, products: newProds });
+    /* refresh side-panel state */
+    setSelShelf({ ...target, products: newProds });
+    setQuery('');
+  };
+
+  const setQty = (prodId:string, qty:number) => {
+    if (!selShelf) return;
+    const newProds = (selShelf.products as ShelfProduct[])
+      .map(p => p.productId === prodId ? { ...p, qty } : p);
+    updShelf({ ...selShelf, products: newProds });
+    setSelShelf({ ...selShelf, products: newProds });
+  };
+
+  const delProd = (prodId:string) => {
+    if (!selShelf) return;
+    const newProds = (selShelf.products as ShelfProduct[])
+      .filter(p => p.productId !== prodId);
+    updShelf({ ...selShelf, products: newProds });
+    setSelShelf({ ...selShelf, products: newProds });
   };
 
   /* ─── JSX ─── */
@@ -369,13 +425,12 @@ export default function FloorPlanDesigner() {
                 x={r.x} y={r.y} w={r.width} h={r.height}
                 selected={sel}
                 onSelect={()=>{ setSelRoadId(r.id); setRoadGroup([]); clearSel('road'); }}
-                onChange={(id,nx,ny)=>{
-                  if (roadGroup.length>1) {
-                    const dx = nx - r.x, dy = ny - r.y;
-                    setRoads(list => list.map(t =>
-                      roadGroup.includes(t.id)?{...t,x:t.x+dx,y:t.y+dy}:t));
-                  } else updRoad({ ...r,x:nx,y:ny });
-                }}
+                onChange={(id,nx,ny)=>(
+                  roadGroup.length>1
+                    ? setRoads(list => list.map(t =>
+                        roadGroup.includes(t.id)?{...t,x:t.x+nx-r.x,y:t.y+ny-r.y}:t))
+                    : updRoad({ ...r,x:nx,y:ny })
+                )}
                 style={{
                   background:P_FILL,
                   border:`3px solid ${P_EDGE}`,
@@ -392,19 +447,91 @@ export default function FloorPlanDesigner() {
         </div>
       </div>
 
-      {/* shelf side panel */}
+      {/* ── shelf side panel ── */}
       {selShelf && (
-        <div className="w-72 bg-glass border-l border-glass p-4 space-y-3">
-          <h3 className="font-bold">Shelf</h3>
-          <label className="text-xs">Label</label>
+        <div className="w-80 bg-glass border-l border-glass p-4 space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="font-bold text-lg">Edit Shelf</h3>
+            <Button size="icon" variant="secondary" onClick={() => setSelShelf(null)}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* ---------- label (rename) ---------- */}
+          <label className="text-xs font-semibold">Label</label>
           <input
             className="w-full bg-glass border border-glass px-2 py-1 rounded"
             value={selShelf.label}
-            onChange={e=>updShelf({ ...selShelf, label:e.target.value })}
+            onChange={e => {
+              /* 1️⃣ create a NEW object (immutability) */
+              const updated = { ...selShelf, label: e.target.value };
+
+              /* 2️⃣ update shelves list */
+              updShelf(updated);
+
+              /* 3️⃣ refresh side panel’s local copy so the
+                    input stays controlled but never mutates
+                    the original reference (fixes “jump”)        */
+              setSelShelf(updated);
+            }}
           />
-          <Button variant="secondary" className="w-full" onClick={()=>setSelShelf(null)}>
-            Close
-          </Button>
+
+          {/* product search */}
+          <div className="space-y-1">
+            <label className="text-xs font-semibold">Add Item</label>
+            <input
+              className="w-full bg-glass border border-glass px-2 py-1 rounded"
+              placeholder="Search product…"
+              value={query}
+              onChange={e=>setQuery(e.target.value)}
+            />
+            {suggestions.length > 0 && (
+              <div className="max-h-40 overflow-y-auto bg-glass border border-glass rounded text-sm shadow-lg">
+                {suggestions.map(p => (
+                  <div
+                    key={p.id}
+                    className="px-2 py-1 hover:bg-sky-600 hover:text-white cursor-pointer"
+                    onClick={()=>addProdToShelf(p.id)}
+                  >
+                    {p.name}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* current items */}
+          <div>
+            <h4 className="font-semibold text-sm mb-1">Items on Shelf</h4>
+            {(selShelf.products as ShelfProduct[]).length === 0
+              ? <p className="text-xs text-gray-400">– empty –</p>
+              : (
+                <ul className="space-y-1 text-xs">
+                  {(selShelf.products as ShelfProduct[]).map(p => {
+                    const prod = mockProducts.find(mp => mp.id === p.productId);
+                    return (
+                      <li key={p.productId} className="flex justify-between items-center">
+                        <span>{prod?.name || p.productId}</span>
+                        <span className="flex items-center gap-1">
+                          <input
+                            type="number" min={1}
+                            value={p.qty}
+                            onChange={e=>setQty(p.productId, Math.max(1, +e.target.value))}
+                            className="w-14 bg-glass border border-glass rounded text-right px-1 py-0.5"
+                          />
+                          <Button
+                            variant="secondary" size="icon"
+                            onClick={()=>delProd(p.productId)}
+                          >
+                            <Trash size={12}/>
+                          </Button>
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+          </div>
         </div>
       )}
     </div>

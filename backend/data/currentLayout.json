@@ -1,155 +1,963 @@
 {
   "name": "Current Layout",
-  "createdAt": 1750770438037,
-  "scale": 1,
+  "createdAt": 1750794927981,
+  "scale": 0.7551018709503956,
   "offset": {
-    "x": 0,
-    "y": 0
+    "x": 121.2226332231894,
+    "y": 200.33076501915644
   },
   "shelves": [
     {
-      "id": "shelf-1",
-      "label": "#1",
-      "type": "aisle",
-      "x": 100,
-      "y": 100,
+      "id": "y7pvsim9qRCw_aUs_7Dgr",
+      "label": "Ram's checkout",
+      "type": "checkout",
+      "x": 793,
+      "y": 165,
       "width": 120,
       "height": 40,
-      "zone": "grocery",
+      "zone": "unassigned",
       "capacity": 50,
       "products": []
     },
     {
-      "id": "shelf-2",
-      "label": "#2",
-      "type": "aisle",
-      "x": 100,
-      "y": 180,
+      "id": "Tv8HeEW6j-rQAHli4z8cJ",
+      "label": "Shyam's checkout",
+      "type": "checkout",
+      "x": 800,
+      "y": 287,
       "width": 120,
       "height": 40,
-      "zone": "grocery",
+      "zone": "unassigned",
       "capacity": 50,
-      "products": []
-    },
-    {
-      "id": "shelf-3",
-      "label": "#3",
-      "type": "aisle",
-      "x": 100,
-      "y": 260,
-      "width": 120,
-      "height": 40,
-      "zone": "grocery",
-      "capacity": 50,
-      "products": []
-    },
-    {
-      "id": "shelf-4",
-      "label": "#4",
-      "type": "endcap",
-      "x": 662,
-      "y": 221,
-      "width": 80,
-      "height": 60,
-      "zone": "snacks",
-      "capacity": 30,
-      "products": []
-    },
-    {
-      "id": "shelf-5",
-      "label": "#5",
-      "type": "island",
-      "x": 612,
-      "y": 477,
-      "width": 100,
-      "height": 80,
-      "zone": "electronics",
-      "capacity": 20,
-      "products": []
-    },
-    {
-      "id": "shelf-6",
-      "label": "#6",
-      "type": "aisle",
-      "x": 399,
-      "y": 190,
-      "width": 120,
-      "height": 40,
-      "zone": "electronics",
-      "capacity": 40,
-      "products": []
-    },
-    {
-      "id": "shelf-7",
-      "label": "#7",
-      "type": "aisle",
-      "x": 172,
-      "y": 495,
-      "width": 120,
-      "height": 40,
-      "zone": "health",
-      "capacity": 45,
-      "products": []
-    },
-    {
-      "id": "shelf-8",
-      "label": "#8",
-      "type": "aisle",
-      "x": 353,
-      "y": 460,
-      "width": 120,
-      "height": 40,
-      "zone": "health",
-      "capacity": 45,
       "products": []
     }
   ],
   "zones": [
     {
-      "id": "entrance",
+      "id": "zone-W4Y7eSOExNSkec2Tt6t0x",
       "name": "Entrance",
-      "x": 50,
-      "y": 50,
-      "width": 100,
-      "height": 80,
+      "x": 788,
+      "y": 73,
+      "width": 180,
+      "height": 140,
       "color": "#00D3FF"
     },
     {
-      "id": "grocery",
+      "id": "zone-5fGSloy1WQzirdfk_m8ML",
+      "name": "Entrance",
+      "x": 791,
+      "y": 281,
+      "width": 180,
+      "height": 140,
+      "color": "#00D3FF"
+    },
+    {
+      "id": "zone-gB9w5lSVtEE8lcHHm9MbV",
       "name": "Grocery",
-      "x": 891,
-      "y": 204,
-      "width": 160,
-      "height": 200,
+      "x": 430.3702215617867,
+      "y": 73.77162973970222,
+      "width": 283,
+      "height": 137,
       "color": "#10B981"
     },
     {
-      "id": "snacks",
+      "id": "zone-9xhVEdeI8afShs00U4AuD",
       "name": "Snacks",
-      "x": 649,
-      "y": 295,
-      "width": 120,
-      "height": 100,
-      "color": "#FFB547"
+      "x": 144.2688266408637,
+      "y": 80.54870003838403,
+      "width": 183.69726095205564,
+      "height": 125.45540523156922,
+      "color": "#FACC15"
     },
     {
-      "id": "electronics",
+      "id": "zone-3qisLfbfx_Jvn4-XvhVM0",
       "name": "Electronics",
-      "x": 636,
-      "y": 202,
-      "width": 200,
-      "height": 120,
+      "x": 145.54719911066024,
+      "y": 289.9968877187541,
+      "width": 563.8059167706756,
+      "height": 137.35135075551761,
       "color": "#8B5CF6"
     },
     {
-      "id": "health",
+      "id": "zone-J_YrnAYKNzcYqNOIlSYKP",
       "name": "Health & Beauty",
-      "x": 439,
-      "y": 306,
-      "width": 200,
-      "height": 80,
+      "x": 150.93640190451433,
+      "y": -129.56579385243361,
+      "width": 499.1622339601273,
+      "height": 128.08107839982927,
       "color": "#EF4444"
+    },
+    {
+      "id": "zone-gAED8Z24SVsGoyUnZ-QX4",
+      "name": "Grocery",
+      "x": 783.351505076455,
+      "y": -126.45951040324383,
+      "width": 183.97297386672358,
+      "height": 142.64864924448239,
+      "color": "#10B981"
     }
   ],
-  "roads": []
+  "roads": [
+    {
+      "id": "SB1wS9PAJD_FsrGbKKMV4",
+      "x": 939.5726694447711,
+      "y": 229.44827934047325,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "Fj1dFzNXmYuBzL_TF4gdo",
+      "x": 907.5726694447711,
+      "y": 229.44827934047325,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "14vfL72CxQwY5MHbJ0PWG",
+      "x": 875.5726694447711,
+      "y": 229.44827934047325,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "hs6uOz6OrHP9JE2mioH5x",
+      "x": 843.5726694447711,
+      "y": 229.44827934047325,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "W2gd8EBHAzB0rTY5_GSuf",
+      "x": 811.5726694447711,
+      "y": 229.44827934047325,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "S4rthcScfzrla--debOqV",
+      "x": 779.5726694447711,
+      "y": 229.44827934047325,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "_QuRViD_dAIRcNUVm9r8d",
+      "x": 747.5726694447711,
+      "y": 229.44827934047325,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "IFy0bc7wJOsGqSa3Io7_X",
+      "x": 715.5726694447711,
+      "y": 229.44827934047325,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "cuXxD57bsNUXb25xnvt9z",
+      "x": 715.5726694447711,
+      "y": 197.44827934047325,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "LjnMeKa9zeqABqGbP-5-F",
+      "x": 715.5726694447711,
+      "y": 165.44827934047325,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "hoxvcZwYaciJVhw_Q7gyp",
+      "x": 715.5726694447711,
+      "y": 133.44827934047325,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "lttxVd4xFUZSTOBgkxbhO",
+      "x": 715.5726694447711,
+      "y": 101.44827934047325,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "x8bamrfAGrYwYiJ7mcLb7",
+      "x": 715.5726694447711,
+      "y": 69.44827934047325,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "BTHyHR__rVrXEx2so-4WA",
+      "x": 715.5726694447711,
+      "y": 37.44827934047325,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "tW1UHbjgEpY9vCWDaqA80",
+      "x": 683.5726694447711,
+      "y": 37.44827934047325,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "n020UDFqtLCqAOn0rbzFZ",
+      "x": 651.5726694447711,
+      "y": 37.44827934047325,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "2ffxFEgnTB-VuaVPlQRFh",
+      "x": 619.5726694447711,
+      "y": 37.44827934047325,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "4gW7uQH_PUObIpXrU74V2",
+      "x": 587.5726694447711,
+      "y": 37.44827934047325,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "kDlB4vKdissW269R03kFJ",
+      "x": 555.5726694447711,
+      "y": 37.44827934047325,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "QVG81FHiZP_07hfILtm3X",
+      "x": 523.5726694447711,
+      "y": 37.44827934047325,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "xChk_VngVxTz-ML-sJjtY",
+      "x": 491.5726694447711,
+      "y": 37.44827934047325,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "3Kx47IdQPXriKOXqxJv23",
+      "x": 459.5726694447711,
+      "y": 37.44827934047325,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "98FigyFBGSOC8Dc4aSHZH",
+      "x": 427.5726694447711,
+      "y": 37.44827934047325,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "fPEV1d0uIMJZNHtMtip69",
+      "x": 395.5726694447711,
+      "y": 37.44827934047325,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "3zJv0jHWHTeKCo6qndeci",
+      "x": 395.5726694447711,
+      "y": 69.44827934047325,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "MmVzulyo5p8SVTgGN0QX7",
+      "x": 395.5726694447711,
+      "y": 101.44827934047325,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "C4zLxEuQxTIISYat0gapx",
+      "x": 395.5726694447711,
+      "y": 133.44827934047325,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "zItfoVYKCEMrA8WFyVuHB",
+      "x": 395.5726694447711,
+      "y": 165.44827934047325,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "gNEAf_1q8wPtXa1oSB5bM",
+      "x": 395.5726694447711,
+      "y": 197.44827934047325,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "7QPYQyuabq_bTemslX-7j",
+      "x": 395.5726694447711,
+      "y": 229.44827934047325,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "LvLaxLuxS9_jMnRIe5lNr",
+      "x": 427.5726694447711,
+      "y": 229.44827934047325,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "wirvwzFnYoEzsV3OBNItX",
+      "x": 459.5726694447711,
+      "y": 229.44827934047325,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "8DXuoq7PYXH7ff19yHhsl",
+      "x": 491.5726694447711,
+      "y": 229.44827934047325,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "WHcFY1egPWF0jkbJUldyH",
+      "x": 523.5726694447711,
+      "y": 229.44827934047325,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "f2DTKv4Xj-syQU9Dj2P7K",
+      "x": 555.5726694447711,
+      "y": 229.44827934047325,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "5WaWNWHQgwoNZ-qB3DCuD",
+      "x": 587.5726694447711,
+      "y": 229.44827934047325,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "9UV72drv9ynxZU2YMQcBi",
+      "x": 619.5726694447711,
+      "y": 229.44827934047325,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "XVI25lSJuI7ktjtlDvsd5",
+      "x": 651.5726694447711,
+      "y": 229.44827934047325,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "fzBly0U96GySbP5ynqc73",
+      "x": 683.5726694447711,
+      "y": 229.44827934047325,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "3UZp6nZA_7OMxSX20hX-s",
+      "x": 715.5726694447711,
+      "y": 261.4482793404733,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "s968AHg8SJ_pI1nVp2E_Y",
+      "x": 715.5726694447711,
+      "y": 293.4482793404733,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "xjcS__oRCye-YEkZbk9YR",
+      "x": 715.5726694447711,
+      "y": 325.4482793404733,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "XYHNyvP4opqqmf9RxTBm5",
+      "x": 715.5726694447711,
+      "y": 357.4482793404733,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "ZP1-9A0NRUYQBsXioxAj7",
+      "x": 715.5726694447711,
+      "y": 389.4482793404733,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "okvnhNNSqMZKx8qgrDBna",
+      "x": 747.5726694447711,
+      "y": 389.4482793404733,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "FJI2GitlKc3BLtNJPQ1hO",
+      "x": 747.5726694447711,
+      "y": 357.4482793404733,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "y2usToYC5gyo0k3TnHFiL",
+      "x": 747.5726694447711,
+      "y": 325.4482793404733,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "dpbo7pui52-Z_9BSXDaek",
+      "x": 747.5726694447711,
+      "y": 293.4482793404733,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "M1Gj9q5VPJ3ah7p6Hff8W",
+      "x": 747.5726694447711,
+      "y": 261.4482793404733,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "3QkrgF1COIC6SnAE1n4fi",
+      "x": 747.5726694447711,
+      "y": 197.44827934047328,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "10m1kwTpRt0K-fHZJ4W3n",
+      "x": 747.5726694447711,
+      "y": 165.44827934047328,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "_kCyvV_kZQREBrTlSrpji",
+      "x": 747.5726694447711,
+      "y": 133.44827934047328,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "yuWhd0yuKooqs4Bok3B81",
+      "x": 747.5726694447711,
+      "y": 101.44827934047328,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "tu_aoMPg6elujutqVxgEn",
+      "x": 747.5726694447711,
+      "y": 69.44827934047328,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "m8LZyVGGy0KPp8aLTESku",
+      "x": 747.5726694447711,
+      "y": 37.44827934047328,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "Har2dpHzDFpCmhrLULLae",
+      "x": 779.5726694447711,
+      "y": 37.44827934047328,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "joIbOSEpOSn4WnLaOLYuL",
+      "x": 811.5726694447711,
+      "y": 37.44827934047328,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "O70oqDlb8OWa4yGC9lEC1",
+      "x": 843.5726694447711,
+      "y": 37.44827934047328,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "3HlZgJktzn-s6rV_Ul8-8",
+      "x": 875.5726694447711,
+      "y": 37.44827934047328,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "NZx4OLS0wvY94ILi1mpq4",
+      "x": 907.5726694447711,
+      "y": 37.44827934047328,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "oIYoY5MppXDbHsPu7TuM2",
+      "x": 939.5726694447711,
+      "y": 37.44827934047328,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "NgXFxymYGSX4Q8JW656qD",
+      "x": 747.5726694447711,
+      "y": 5.448279340473277,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "ORgCE1WBUHD31YDtA8wA2",
+      "x": 747.5726694447711,
+      "y": -26.551720659526723,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "jgvrx5Zu97N9bV_coUW6E",
+      "x": 747.5726694447711,
+      "y": -58.55172065952672,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "UNht4s-KDafvcDheK6kIh",
+      "x": 747.5726694447711,
+      "y": -90.55172065952672,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "jYiEEMYIoVmLqEnQlXsp_",
+      "x": 747.5726694447711,
+      "y": -122.55172065952672,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "ZPkGQVwPuyAY4Iay3LnOI",
+      "x": 715.5726694447711,
+      "y": -122.55172065952672,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "sr9rDnkPFlkZiFaVphMlg",
+      "x": 683.5726694447711,
+      "y": -122.55172065952672,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "4FXMSXecw8CeOjcdaWGU4",
+      "x": 651.5726694447711,
+      "y": -122.55172065952672,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "WOkAejr59qFZ3TsxKoyZZ",
+      "x": 651.5726694447711,
+      "y": -90.55172065952672,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "9sv3w53Fn6VWtjCFm51-s",
+      "x": 683.5726694447711,
+      "y": -90.55172065952672,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "adEXxjs1Phzx34ihTuu6V",
+      "x": 715.5726694447711,
+      "y": -90.55172065952672,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "2MZQ_32VVJ6eQXxy3ClnY",
+      "x": 715.5726694447711,
+      "y": -58.55172065952672,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "feqUtCEYxHtBlWK9CNgtQ",
+      "x": 683.5726694447711,
+      "y": -58.55172065952672,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "DdgvKMhnkPXt6hM37M1MC",
+      "x": 651.5726694447711,
+      "y": -58.55172065952672,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "HF91bzQpuFFYe6y1eFkdD",
+      "x": 651.5726694447711,
+      "y": -26.551720659526723,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "h_qBgv3yKnqWvoAJKZ1Kc",
+      "x": 683.5726694447711,
+      "y": -26.551720659526723,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "YTGz5ZHLcCk8VUiwXO5Bm",
+      "x": 715.5726694447711,
+      "y": -26.551720659526723,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "rxMEgPtu-muorqe13WNHI",
+      "x": 715.5726694447711,
+      "y": 5.448279340473277,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "mvt5C2CNlELEBaBClI-6k",
+      "x": 683.5726694447711,
+      "y": 5.448279340473277,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "-KgUb1wahp48i0DB7o_IE",
+      "x": 651.5726694447711,
+      "y": 5.448279340473277,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "juiBZkPj-FTpVcd1L5iWQ",
+      "x": 619.5726694447711,
+      "y": 5.448279340473277,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "d18CNx_vYSBRry8fJpe0V",
+      "x": 587.5726694447711,
+      "y": 5.448279340473277,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "mnZkVXppBGcSb3cLlU9Ij",
+      "x": 555.5726694447711,
+      "y": 5.448279340473277,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "H9B-iR3h0PCXCx_rPupDp",
+      "x": 523.5726694447711,
+      "y": 5.448279340473277,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "tyYBtzQFt1YKeYQYQ7CWD",
+      "x": 491.5726694447711,
+      "y": 5.448279340473277,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "HWDKzDzp5ZH1rdxbkvnyN",
+      "x": 459.5726694447711,
+      "y": 5.448279340473277,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "HNnt0nMbc9hYyDlfs2jtc",
+      "x": 427.5726694447711,
+      "y": 5.448279340473277,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "1xqkzyv-bzgWbIoTykhc5",
+      "x": 395.5726694447711,
+      "y": 5.448279340473277,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "Yf9YeYsgbpktfaxLBskTP",
+      "x": 363.5726694447711,
+      "y": 5.448279340473277,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "G7UycdMauo5L6BTPc1Lpw",
+      "x": 331.5726694447711,
+      "y": 5.448279340473277,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "5xPql_LMqfyldz4P5_abI",
+      "x": 299.5726694447711,
+      "y": 5.448279340473277,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "61GhPjjs8dvFHTa2h3k73",
+      "x": 267.5726694447711,
+      "y": 5.448279340473277,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "sMIVPm-FTkUmZSg0RenB1",
+      "x": 235.57266944477112,
+      "y": 5.448279340473277,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "MPvDKQY-1VS2Z93iDp6ow",
+      "x": 203.57266944477112,
+      "y": 5.448279340473277,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "jD1bUJqeDFzHYYUdWpbaS",
+      "x": 171.57266944477112,
+      "y": 5.448279340473277,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "6apCPlotvo_o0vaFPXAnv",
+      "x": 139.57266944477112,
+      "y": 5.448279340473277,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "kmLQdR77X_ndkpsT97O23",
+      "x": 139.57266944477112,
+      "y": 37.44827934047328,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "XTC49Zb3uerqmjbkzNpWe",
+      "x": 171.57266944477112,
+      "y": 37.44827934047328,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "Oou7ZOCVXAy6VpCZxsgIk",
+      "x": 203.57266944477112,
+      "y": 37.44827934047328,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "6Lir4V-jtLN4jVf4KqDVU",
+      "x": 235.57266944477112,
+      "y": 37.44827934047328,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "touUps6JCPQvkJYBDIAvC",
+      "x": 267.5726694447711,
+      "y": 37.44827934047328,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "E8YSIis4N2zGurSksXOZN",
+      "x": 299.5726694447711,
+      "y": 37.44827934047328,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "Ya57Hyp7JYx7JFzhEd4Fh",
+      "x": 331.5726694447711,
+      "y": 37.44827934047328,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "FYduJTG0PsxT8z7BCr8d-",
+      "x": 331.5726694447711,
+      "y": 69.44827934047328,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "gVNSchd6iokEe6Glmvtuy",
+      "x": 331.5726694447711,
+      "y": 101.44827934047328,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "NXrYJH_yRBtIQd4d7zQl5",
+      "x": 331.5726694447711,
+      "y": 133.44827934047328,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "UHyJ21EctDgCpnGSv-V6c",
+      "x": 331.5726694447711,
+      "y": 165.44827934047328,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "KvKTaKKOnkRvvpO7OQrA2",
+      "x": 331.5726694447711,
+      "y": 197.44827934047328,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "x4Q3X7DCNatKabuhxOh29",
+      "x": 331.5726694447711,
+      "y": 229.44827934047328,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "gEZq23y6CDTRmRfoRzpg9",
+      "x": 299.5726694447711,
+      "y": 229.44827934047328,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "HUAuo0JxyoaDr9HdIIwUs",
+      "x": 267.5726694447711,
+      "y": 229.44827934047328,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "H2TYHbiCwlxy8BWbJf4Df",
+      "x": 235.57266944477112,
+      "y": 229.44827934047328,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "oBab77uZ72JTh8tJHfngo",
+      "x": 203.57266944477112,
+      "y": 229.44827934047328,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "qdAgAR_vTN5gK3LawdGJr",
+      "x": 171.57266944477112,
+      "y": 229.44827934047328,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "2z0x2qoc_EhugG9yoFgcP",
+      "x": 139.57266944477112,
+      "y": 229.44827934047328,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "XFJ1I0ZSgJBrapTmBB3-3",
+      "x": 363.5726694447711,
+      "y": 229.44827934047328,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "aT7Dmk6iNkxvF1zhfaua9",
+      "x": 363.5726694447711,
+      "y": 197.44827934047328,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "sM29O8SLpxE-LZHBRaUoh",
+      "x": 363.5726694447711,
+      "y": 165.44827934047328,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "uI1sbx_AszwIoy6dQS9O-",
+      "x": 363.5726694447711,
+      "y": 133.44827934047328,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "5e_ucDpSH3P9IB9MoiFHH",
+      "x": 363.5726694447711,
+      "y": 101.44827934047328,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "NevI5v85BXbqbnFinC5c9",
+      "x": 363.5726694447711,
+      "y": 69.44827934047328,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "Cqv_FDKQfOO9JuRLAjIsC",
+      "x": 363.5726694447711,
+      "y": 37.44827934047328,
+      "width": 32,
+      "height": 32
+    }
+  ]
 }
