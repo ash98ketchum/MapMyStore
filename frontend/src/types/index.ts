@@ -6,18 +6,40 @@ export interface Product {
   shelfId: string;
   stock: number;
 }
+export type ShelfType = 'aisle' | 'endcap' | 'island' | 'checkout';
 
 export interface Shelf {
+  id: string;           // uuid or nanoid
+  label: string;        // NEW  e.g. "#1"
+  type: ShelfType;
+  x: number;  y: number;
+  width: number; height: number;
+  zone: string;
+  capacity: number;
+  products: any[];
+}
+
+export interface Zone {
   id: string;
-  type: 'aisle' | 'endcap' | 'island' | 'checkout';
+  name: string;
+  color: string;
   x: number;
   y: number;
   width: number;
   height: number;
-  zone: string;
-  capacity: number;
-  products: Product[];
 }
+
+export interface Point {
+  x: number;
+  y: number;
+}
+
+export interface Path {
+  id: string;
+  points: Point[];
+  color: string;
+}
+
 
 export interface Beacon {
   id: string;
@@ -58,15 +80,14 @@ export interface Position {
   x: number;
   y: number;
 }
-
-export interface Zone {
+export interface Road {
   id: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+export interface ZonePaletteDef {
   name: string;
-  bounds: {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  };
   color: string;
 }
