@@ -1,0 +1,155 @@
+{
+  "name": "Current Layout",
+  "createdAt": 1750770438037,
+  "scale": 1,
+  "offset": {
+    "x": 0,
+    "y": 0
+  },
+  "shelves": [
+    {
+      "id": "shelf-1",
+      "label": "#1",
+      "type": "aisle",
+      "x": 100,
+      "y": 100,
+      "width": 120,
+      "height": 40,
+      "zone": "grocery",
+      "capacity": 50,
+      "products": []
+    },
+    {
+      "id": "shelf-2",
+      "label": "#2",
+      "type": "aisle",
+      "x": 100,
+      "y": 180,
+      "width": 120,
+      "height": 40,
+      "zone": "grocery",
+      "capacity": 50,
+      "products": []
+    },
+    {
+      "id": "shelf-3",
+      "label": "#3",
+      "type": "aisle",
+      "x": 100,
+      "y": 260,
+      "width": 120,
+      "height": 40,
+      "zone": "grocery",
+      "capacity": 50,
+      "products": []
+    },
+    {
+      "id": "shelf-4",
+      "label": "#4",
+      "type": "endcap",
+      "x": 662,
+      "y": 221,
+      "width": 80,
+      "height": 60,
+      "zone": "snacks",
+      "capacity": 30,
+      "products": []
+    },
+    {
+      "id": "shelf-5",
+      "label": "#5",
+      "type": "island",
+      "x": 612,
+      "y": 477,
+      "width": 100,
+      "height": 80,
+      "zone": "electronics",
+      "capacity": 20,
+      "products": []
+    },
+    {
+      "id": "shelf-6",
+      "label": "#6",
+      "type": "aisle",
+      "x": 399,
+      "y": 190,
+      "width": 120,
+      "height": 40,
+      "zone": "electronics",
+      "capacity": 40,
+      "products": []
+    },
+    {
+      "id": "shelf-7",
+      "label": "#7",
+      "type": "aisle",
+      "x": 172,
+      "y": 495,
+      "width": 120,
+      "height": 40,
+      "zone": "health",
+      "capacity": 45,
+      "products": []
+    },
+    {
+      "id": "shelf-8",
+      "label": "#8",
+      "type": "aisle",
+      "x": 353,
+      "y": 460,
+      "width": 120,
+      "height": 40,
+      "zone": "health",
+      "capacity": 45,
+      "products": []
+    }
+  ],
+  "zones": [
+    {
+      "id": "entrance",
+      "name": "Entrance",
+      "x": 50,
+      "y": 50,
+      "width": 100,
+      "height": 80,
+      "color": "#00D3FF"
+    },
+    {
+      "id": "grocery",
+      "name": "Grocery",
+      "x": 891,
+      "y": 204,
+      "width": 160,
+      "height": 200,
+      "color": "#10B981"
+    },
+    {
+      "id": "snacks",
+      "name": "Snacks",
+      "x": 649,
+      "y": 295,
+      "width": 120,
+      "height": 100,
+      "color": "#FFB547"
+    },
+    {
+      "id": "electronics",
+      "name": "Electronics",
+      "x": 636,
+      "y": 202,
+      "width": 200,
+      "height": 120,
+      "color": "#8B5CF6"
+    },
+    {
+      "id": "health",
+      "name": "Health & Beauty",
+      "x": 439,
+      "y": 306,
+      "width": 200,
+      "height": 80,
+      "color": "#EF4444"
+    }
+  ],
+  "roads": []
+}
