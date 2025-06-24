@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Button from '../ui/Button';
+import GlassCard from '../ui/GlassCard';
+import { mockProducts } from '../../data/mockData'; 
 
 import {
   BarChart3,
@@ -12,13 +14,24 @@ import {
   ChevronRight,
   Bell,
   Search,
-  MapPin, // ✅ Added
+  MapPin,
 } from 'lucide-react';
 
 const AdminLayout = () => {
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const location = useLocation();
   const navigate = useNavigate();
+  
+interface Product {
+  id: string;
+  name: string;
+  category: string;
+  sku: string;
+  shelfId: string;
+  stock: number;
+}
 
   const navItems = [
     { path: '/admin', icon: BarChart3, label: 'Overview', exact: true },
@@ -28,6 +41,14 @@ const AdminLayout = () => {
     { path: '/admin/beacons', icon: Radio, label: 'Beacons' },
   ];
 
+useEffect(() => {
+  const filtered = mockProducts.filter((product) =>
+    product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    product.category.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  setFilteredProducts(filtered);
+}, [searchQuery]);
+
   const handleLogout = () => {
     navigate('/signin/customer');
   };
@@ -35,6 +56,11 @@ const AdminLayout = () => {
   const isActive = (path: string, exact = false) => {
     return exact ? location.pathname === path : location.pathname.startsWith(path);
   };
+
+  const filteredResults = mockProducts.filter((product) =>
+    product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    product.category.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="flex h-screen bg-primary">
@@ -101,6 +127,8 @@ const AdminLayout = () => {
               <input
                 type="text"
                 placeholder="Search stores, products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 pr-4 py-2 bg-glass rounded-xl border border-glass focus:border-accent focus:outline-none text-sm w-80"
               />
             </div>
@@ -113,13 +141,49 @@ const AdminLayout = () => {
               <span className="absolute -top-1 -right-1 h-3 w-3 bg-highlight rounded-full"></span>
             </button>
 
-            {/* Buttons next to bell */}
             <Link to="/admin/floor-designer">
               <Button variant="primary" icon={MapPin}>Open Floor Designer</Button>
             </Link>
             <Button variant="highlight" onClick={handleLogout}>Logout</Button>
           </div>
         </div>
+
+        {/* Search Results */}
+      {searchQuery && (
+  <div className="p-6">
+    <h2 className="text-lg font-semibold mb-3">
+      Search Results ({filteredProducts.length})
+    </h2>
+    <div className="space-y-3">
+      {filteredProducts.map((product, index) => (
+        <motion.div
+          key={product.id}
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: index * 0.1 }}
+        >
+            <Link to={`/admin/products/${product.id}`}>
+            <GlassCard className="p-4 flex items-center space-x-4 hover:bg-white hover:bg-opacity-10 transition-all">
+              <div className="w-12 h-12 bg-glass rounded-lg flex items-center justify-center">
+                <Package className="h-6 w-6 text-gray-400" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-medium">{product.name}</h3>
+                <p className="text-sm text-gray-400">{product.category}</p>
+                <div className="flex items-center space-x-4 mt-1">
+                  <span className="text-xs text-accent">Stock: {product.stock}</span>
+                  <span className="text-xs text-gray-400">Shelf {product.shelfId}</span>
+                </div>
+              </div>
+              {/* <Map className="h-5 w-5 text-gray-400" /> */}
+            </GlassCard>
+          </Link>
+        </motion.div>
+      ))}
+    </div>
+  </div>
+)}
+
 
         {/* Page Content */}
         <div className="flex-1 overflow-auto">

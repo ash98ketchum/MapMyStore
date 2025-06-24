@@ -55,11 +55,11 @@ export interface DiscountRule {
   id: string;
   name: string;
   trigger: {
-    type: 'zone-enter' | 'product-view' | 'time-based';
+    type: 'zone-enter' | 'product-view' | 'time-based'|'cart-total';
     value: string;
   };
   condition: {
-    type: 'category' | 'product' | 'user-type';
+    type: 'category' | 'product' | 'user-type'|'first-visit'|'item-count';
     value: string;
   };
   action: {
