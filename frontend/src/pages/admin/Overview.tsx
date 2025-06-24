@@ -1,12 +1,20 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, Users, MapPin, Zap, ArrowRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import GlassCard from '../../components/ui/GlassCard';
 import Button from '../../components/ui/Button';
 import { mockAnalytics, mockEvents } from '../../data/mockData';
 
 const Overview = () => {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.setItem("role", "customer");
+    localStorage.removeItem("loggedIn");
+    navigate("/signin/customer");
+  };
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -15,11 +23,9 @@ const Overview = () => {
           <h1 className="text-3xl font-bold mb-2">Smart Floor Manager</h1>
           <p className="text-gray-400">Real-time analytics and store management</p>
         </div>
-        <Link to="/admin/floor-designer">
-          <Button variant="primary" icon={MapPin}>
-            Open Floor Designer
-          </Button>
-        </Link>
+        <div className="flex gap-4">
+         
+        </div>
       </div>
 
       {/* KPI Cards */}
@@ -141,7 +147,6 @@ const Overview = () => {
               <ArrowRight className="h-4 w-4 text-gray-400 mt-2 group-hover:translate-x-1 transition-transform" />
             </div>
           </Link>
-          
           <Link to="/admin/products" className="group">
             <div className="p-4 bg-glass rounded-xl hover:bg-white hover:bg-opacity-10 transition-all cursor-pointer">
               <Zap className="h-8 w-8 text-highlight mb-2" />
@@ -150,7 +155,6 @@ const Overview = () => {
               <ArrowRight className="h-4 w-4 text-gray-400 mt-2 group-hover:translate-x-1 transition-transform" />
             </div>
           </Link>
-          
           <Link to="/admin/discounts" className="group">
             <div className="p-4 bg-glass rounded-xl hover:bg-white hover:bg-opacity-10 transition-all cursor-pointer">
               <TrendingUp className="h-8 w-8 text-purple-400 mb-2" />
@@ -159,7 +163,6 @@ const Overview = () => {
               <ArrowRight className="h-4 w-4 text-gray-400 mt-2 group-hover:translate-x-1 transition-transform" />
             </div>
           </Link>
-          
           <Link to="/admin/beacons" className="group">
             <div className="p-4 bg-glass rounded-xl hover:bg-white hover:bg-opacity-10 transition-all cursor-pointer">
               <Users className="h-8 w-8 text-green-400 mb-2" />

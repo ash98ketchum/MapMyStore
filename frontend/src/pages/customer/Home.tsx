@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Map, ShoppingCart, User, Zap, Package, Smartphone, Heart } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Search, Map, ShoppingCart, User, Zap, LogOut, Package, Smartphone, Heart } from 'lucide-react';
+import { Link, useNavigate} from 'react-router-dom';
 import Button from '../../components/ui/Button';
 import GlassCard from '../../components/ui/GlassCard';
 import { mockProducts } from '../../data/mockData';
@@ -20,7 +20,11 @@ const Home = () => {
   const filteredProducts = mockProducts.filter(product =>
     product.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+const navigate = useNavigate();
 
+const handleLogout = () => {
+  navigate('/signin/customer');
+};
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
@@ -39,7 +43,9 @@ const Home = () => {
                 </span>
               )}
             </Link>
-            <User className="h-6 w-6 text-gray-400" />
+           <button onClick={handleLogout} className="p-1 hover:text-white transition-colors">
+              <LogOut className="h-6 w-6 text-gray-400" />
+            </button>
           </div>
         </div>
 
