@@ -1,9 +1,11 @@
-// File: src/pages/admin/FloorPlanDesigner.tsx
 // -----------------------------------------------------------------------------
-// Floor-plan designer – full-canvas soft blueprint, smooth pan & zoom
+// Floor-plan Designer
+// – Blueprint grid, smooth pan/zoom
+// – Saves ONE layout to /api/layout (overwrites each time)
+// – Loads that layout automatically on page refresh or server restart
 // -----------------------------------------------------------------------------
 
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { nanoid } from 'nanoid';
 import DraggableBox from '../../components/floorplan/DraggableBox';
 import Button from '../../components/ui/Button';
@@ -15,9 +17,9 @@ import { Shelf, ShelfType, Zone, Road } from '../../types';
 import { mockShelves, mockZones } from '../../data/mockData';
 
 /* ─── constants ─── */
-const PAVER = 32;
-const P_FILL = '#b4b8bd';
-const P_EDGE = '#2f2f2f';
+const PAVER   = 32;
+const P_FILL  = '#b4b8bd';
+const P_EDGE  = '#2f2f2f';
 
 const shelfDefs: Record<ShelfType, { name: string; color: string }> = {
   aisle:    { name: 'Aisle',    color: '#00D3FF' },
@@ -34,11 +36,12 @@ const zonePalette = [
   { name: 'Health & Beauty', color: '#EF4444' },
 ];
 
-/* ─── helper: collect connected pavers ─── */
-function collectRoad(start: string, list: Road[]) {
+/* ─── helper: collect connected road tiles ─── */
+function collectRoad(start: string, list: Road[]): string[] {
   const map = new Map(list.map(p => [p.id, p]));
   const out = new Set<string>();
   const stack = [start];
+
   while (stack.length) {
     const id = stack.pop()!;
     if (out.has(id)) continue;
@@ -58,43 +61,59 @@ function collectRoad(start: string, list: Road[]) {
 
 /* ─── component ─── */
 export default function FloorPlanDesigner() {
-  /* entities */
+  /* shelves, zones, roads */
   const [shelves, setShelves] = useState<Shelf[]>(mockShelves);
   const [zones,   setZones]   = useState<Zone[]>(mockZones);
   const [roads,   setRoads]   = useState<Road[]>([]);
 
-  /* counters */
+  /* counters for new IDs */
   const shelfN = useRef(mockShelves.length + 1);
   const zoneN  = useRef(1);
 
-  /* selection */
+  /* selections */
   const [selShelf,   setSelShelf]   = useState<Shelf|null>(null);
   const [selZoneId,  setSelZoneId]  = useState<string|null>(null);
   const [selRoadId,  setSelRoadId]  = useState<string|null>(null);
   const [roadGroup,  setRoadGroup]  = useState<string[]>([]);
 
-  /* first road placement */
+  /* first road placement flag */
   const [placingRoad, setPlacingRoad] = useState(false);
 
-  /* pan / zoom */
-  const [scale,  setScale]  = useState(1);
+  /* pan & zoom */
+  const [scale,  setScale]  = useState(1);           // 0.4 → 3
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [panning, setPanning] = useState(false);
   const panStart = useRef({ x: 0, y: 0 });
   const canvasRef = useRef<HTMLDivElement>(null);
 
-  /* block ctrl-wheel page zoom */
+  /* ─── block browser’s ctrl+wheel zoom ─── */
   useEffect(() => {
     const stop = (e: WheelEvent) => { if (e.ctrlKey) e.preventDefault(); };
     window.addEventListener('wheel', stop, { passive: false });
     return () => window.removeEventListener('wheel', stop);
   }, []);
 
-  /* ── wheel zoom ─ */
+  /* ─── LOAD saved layout on mount ─── */
+  useEffect(() => {
+    fetch('/api/layout')
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(l => {
+        setScale(l.scale);
+        setOffset(l.offset);
+        setShelves(l.shelves);
+        setZones(l.zones);
+        setRoads(l.roads);
+      })
+      .catch(() => {
+        /* no saved layout yet: keep mock data */
+      });
+  }, []);
+
+  /* ─── wheel-zoom ─── */
   const onWheel = (e: React.WheelEvent) => {
     e.preventDefault();
     const factor = 1 - e.deltaY / 600;
-    const next   = Math.max(0.4, Math.min(3, scale * factor));
+    const next   = Math.min(3, Math.max(0.4, scale * factor));
     if (next === scale) return;
 
     const rect = canvasRef.current!.getBoundingClientRect();
@@ -106,10 +125,10 @@ export default function FloorPlanDesigner() {
     setScale(next);
   };
 
-  /* ── pan (any left-drag on empty canvas) ─ */
+  /* ─── panning ─── */
   const startPan = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('[data-draggable="true"]')) return;
-    if (e.button !== 0) return;       // primary / touchpad click
+    if (e.button !== 0) return;
     e.preventDefault();
     setPanning(true);
     panStart.current = { x: e.clientX - offset.x, y: e.clientY - offset.y };
@@ -119,31 +138,21 @@ export default function FloorPlanDesigner() {
     panning && setOffset({ x: e.clientX - panStart.current.x, y: e.clientY - panStart.current.y });
   const endPan = () => { setPanning(false); document.body.style.cursor = 'default'; };
 
-  /* ── entity updaters ─ */
-  const updShelf = (s:Shelf) => setShelves(a => a.map(t => t.id===s.id? s:t));
-  const updZone  = (z:Zone)  => setZones  (a => a.map(t => t.id===z.id? z:t));
-  const updRoad  = (r:Road)  => setRoads  (a => a.map(t => t.id===r.id? r:t));
-
-  const clearSel = (keep:'shelf'|'zone'|'road'|'none') => {
-    if (keep!=='shelf') setSelShelf(null);
-    if (keep!=='zone')  setSelZoneId(null);
-    if (keep!=='road')  { setSelRoadId(null); setRoadGroup([]); }
-  };
-
-  /* ── palette actions ─ */
+  /* ─── create helpers ─── */
   const addShelf = (t: ShelfType) =>
-    setShelves(a => [...a,{
+    setShelves(a => [...a, {
       id:nanoid(), label:`#${shelfN.current++}`, type:t,
-      x:80, y:80, width:120, height:40, zone:'unassigned', capacity:50, products:[],
+      x:80, y:80, width:120, height:40,
+      zone:'unassigned', capacity:50, products:[],
     }]);
 
   const addZone = (name:string, color:string) =>
-    setZones(a => [...a,{
+    setZones(a => [...a, {
       id:`zone-${zoneN.current++}`, name, color,
       x:100, y:100, width:180, height:140,
     }]);
 
-  /* ── road placement & extension ─ */
+  /* ─── first road tile ─── */
   const placeRoadStart = (e: React.MouseEvent) => {
     if (!placingRoad || !canvasRef.current) return;
     const rect = canvasRef.current.getBoundingClientRect();
@@ -152,39 +161,76 @@ export default function FloorPlanDesigner() {
     const r:Road = { id:nanoid(), x:wx-PAVER/2, y:wy-PAVER/2, width:PAVER, height:PAVER };
     setRoads(a => [...a,r]);
     setSelRoadId(r.id); setRoadGroup([]);
-    setPlacingRoad(false); clearSel('road');
+    setPlacingRoad(false);
+    setSelShelf(null); setSelZoneId(null);
   };
-  const extendRoad = (dir:'up'|'down'|'left'|'right') => {
+
+  /* ─── extend road ─── */
+  const extendRoad = (dir:'left'|'right'|'up'|'down') => {
     if (!selRoadId) return;
-    const b = roads.find(r => r.id===selRoadId)!;
+    const base = roads.find(r => r.id===selRoadId)!;
     const r:Road = {
       id:nanoid(),
-      x: dir==='left'? b.x-PAVER : dir==='right'? b.x+PAVER : b.x,
-      y: dir==='up'?   b.y-PAVER : dir==='down'?  b.y+PAVER : b.y,
+      x: dir==='left'? base.x-PAVER : dir==='right'? base.x+PAVER : base.x,
+      y: dir==='up'?   base.y-PAVER : dir==='down'?  base.y+PAVER : base.y,
       width:PAVER, height:PAVER,
     };
     setRoads(a => [...a,r]);
     setSelRoadId(r.id); setRoadGroup([]);
   };
 
-  /* ── delete ─ */
+  /* ─── update helpers ─── */
+  const updShelf = (s:Shelf) => setShelves(a => a.map(t => t.id===s.id? s:t));
+  const updZone  = (z:Zone)  => setZones  (a => a.map(t => t.id===z.id? z:t));
+  const updRoad  = (r:Road)  => setRoads  (a => a.map(t => t.id===r.id? r:t));
+
+  /* ─── delete helpers ─── */
   const deleteSel = () => {
-    if (selShelf)        { setShelves(shelves.filter(s => s.id!==selShelf.id));  setSelShelf(null); }
-    else if (selZoneId)  { setZones  (zones.filter(z  => z.id!==selZoneId));     setSelZoneId(null);}
+    if (selShelf)          { setShelves(shelves.filter(s => s.id!==selShelf.id)); setSelShelf(null); }
+    else if (selZoneId)    { setZones  (zones.filter(z  => z.id!==selZoneId));    setSelZoneId(null);}
     else if (roadGroup.length) {
       setRoads(roads.filter(r => !roadGroup.includes(r.id)));
       setSelRoadId(null); setRoadGroup([]);
-    } else if (selRoadId) {
+    } else if (selRoadId)  {
       setRoads(roads.filter(r => r.id!==selRoadId)); setSelRoadId(null);
     }
   };
 
-  /* ───────── JSX ───────── */
+  const clearSel = (keep:'shelf'|'zone'|'road'|'none') => {
+    if (keep!=='shelf') setSelShelf(null);
+    if (keep!=='zone')  setSelZoneId(null);
+    if (keep!=='road')  { setSelRoadId(null); setRoadGroup([]); }
+  };
+
+  /* ─── SAVE layout (PUT /api/layout) ─── */
+  const handleSaveLayout = async () => {
+    const payload = {
+      name      : 'Current Layout',
+      createdAt : Date.now(),
+      scale,
+      offset,
+      shelves,
+      zones,
+      roads,
+    };
+    try {
+      const res = await fetch('/api/layout', {
+        method : 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body   : JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      alert('Layout saved!');
+    } catch (err:any) {
+      alert(`Save failed: ${err.message}`);
+    }
+  };
+
+  /* ─── JSX ─── */
   return (
     <div className="h-full flex overflow-hidden select-none">
-      {/* PALETTE ----------------------------------------------------------- */}
-      <aside className="w-64 bg-glass p-4 space-y-3 overflow-y-auto
-                         scrollbar-thin scrollbar-thumb-gray-700">
+      {/* ── Palette ── */}
+      <aside className="w-64 bg-glass p-4 space-y-3 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700">
         <h2 className="font-bold">Palette</h2>
         {Object.keys(shelfDefs).map(t => (
           <Button key={t} className="w-full" onClick={() => addShelf(t as ShelfType)}>
@@ -198,17 +244,21 @@ export default function FloorPlanDesigner() {
             + {z.name}
           </Button>
         ))}
-        <Button variant={placingRoad?'primary':'secondary'} className="w-full mt-3"
+        <Button variant={placingRoad ? 'primary' : 'secondary'} className="w-full mt-3"
                 onClick={() => { setPlacingRoad(!placingRoad); clearSel('none'); }}>
           {placingRoad ? 'Cancel Path' : 'Add Path'}
         </Button>
+        <Button variant="primary" className="w-full" onClick={handleSaveLayout}>
+          Save Layout
+        </Button>
 
+        {/* D-pad & link */}
         {selRoadId && (
           <div className="grid grid-cols-3 gap-0.5 w-max mx-auto mt-3">
-            <div/>
+            <div />
             <Button variant="secondary" className="w-10 h-10 rounded-b-none"
                     onClick={() => extendRoad('up')}><ChevronUp size={18}/></Button>
-            <div/>
+            <div />
             <Button variant="secondary" className="w-10 h-10 rounded-r-none"
                     onClick={() => extendRoad('left')}><ChevronLeft size={18}/></Button>
             <Button variant="secondary" className="w-10 h-10"
@@ -217,10 +267,10 @@ export default function FloorPlanDesigner() {
             </Button>
             <Button variant="secondary" className="w-10 h-10 rounded-l-none"
                     onClick={() => extendRoad('right')}><ChevronRight size={18}/></Button>
-            <div/>
+            <div />
             <Button variant="secondary" className="w-10 h-10 rounded-t-none"
                     onClick={() => extendRoad('down')}><ChevronDown size={18}/></Button>
-            <div/>
+            <div />
           </div>
         )}
 
@@ -233,7 +283,7 @@ export default function FloorPlanDesigner() {
         )}
       </aside>
 
-      {/* CANVAS WRAPPER ---------------------------------------------------- */}
+      {/* ── Canvas wrapper ── */}
       <div
         className="flex-1 relative overflow-hidden bg-[#0C1C33]"
         onWheel={onWheel}
@@ -243,7 +293,7 @@ export default function FloorPlanDesigner() {
         onMouseLeave={endPan}
         onContextMenu={e => e.preventDefault()}
       >
-        {/* blueprint grid (soft lines) */}
+        {/* blueprint grid */}
         <div
           className="absolute inset-0 z-0 pointer-events-none"
           style={{
@@ -256,7 +306,6 @@ export default function FloorPlanDesigner() {
             backgroundSize: '20px 20px, 20px 20px, 100px 100px, 100px 100px',
           }}
         />
-        {/* grain */}
         <div
           className="absolute inset-0 z-0 pointer-events-none opacity-[0.03]"
           style={{
@@ -265,7 +314,7 @@ export default function FloorPlanDesigner() {
           }}
         />
 
-        {/* pan/zoom container */}
+        {/* pan/zoom surface */}
         <div
           ref={canvasRef}
           className="relative w-full h-full overflow-visible z-10"
@@ -276,7 +325,7 @@ export default function FloorPlanDesigner() {
             transition: 'transform 80ms ease-out',
           }}
         >
-          {/* ZONES (z 10) */}
+          {/* zones */}
           {zones.map(z => (
             <DraggableBox key={z.id} id={z.id} scale={scale} data-draggable="true"
               x={z.x} y={z.y} w={z.width} h={z.height}
@@ -288,15 +337,14 @@ export default function FloorPlanDesigner() {
                 border:`2px dashed ${selZoneId===z.id? '#38bdf8': z.color}`,
                 zIndex:10,
               }}>
-              <div className="absolute inset-0 flex items-center justify-center
-                              text-xs font-semibold pointer-events-none"
+              <div className="absolute inset-0 flex items-center justify-center text-xs font-semibold pointer-events-none"
                    style={{ color: selZoneId===z.id? '#38bdf8': z.color }}>
                 {z.name}
               </div>
             </DraggableBox>
           ))}
 
-          {/* SHELVES (z 20) */}
+          {/* shelves */}
           {shelves.map(s => (
             <DraggableBox key={s.id} id={s.id} scale={scale} data-draggable="true"
               x={s.x} y={s.y} w={s.width} h={s.height}
@@ -307,14 +355,13 @@ export default function FloorPlanDesigner() {
                 background:`linear-gradient(135deg, ${shelfDefs[s.type].color} 0%, #ffffff33 100%)`,
                 zIndex:20,
               }}>
-              <div className="absolute inset-0 flex items-center justify-center
-                              text-white/90 text-xs font-bold pointer-events-none">
+              <div className="absolute inset-0 flex items-center justify-center text-white/90 text-xs font-bold pointer-events-none">
                 {s.label}
               </div>
             </DraggableBox>
           ))}
 
-          {/* ROADS (z 30) */}
+          {/* roads */}
           {roads.map(r => {
             const sel = selRoadId===r.id || roadGroup.includes(r.id);
             return (
@@ -330,27 +377,32 @@ export default function FloorPlanDesigner() {
                   } else updRoad({ ...r,x:nx,y:ny });
                 }}
                 style={{
-                  background:P_FILL, border:`3px solid ${P_EDGE}`, borderRadius:4,
+                  background:P_FILL,
+                  border:`3px solid ${P_EDGE}`,
+                  borderRadius:4,
                   boxShadow: sel
                     ? '0 0 6px 2px #38bdf8, 0 2px 6px #0006'
                     : '0 2px 4px #0004',
                   transition:'box-shadow .15s',
                   zIndex:30,
-                }}/>
+                }}
+              />
             );
           })}
         </div>
       </div>
 
-      {/* SHELF side-panel -------------------------------------------------- */}
+      {/* shelf side panel */}
       {selShelf && (
         <div className="w-72 bg-glass border-l border-glass p-4 space-y-3">
           <h3 className="font-bold">Shelf</h3>
           <label className="text-xs">Label</label>
-          <input className="w-full bg-glass border border-glass px-2 py-1 rounded"
-                 value={selShelf.label}
-                 onChange={e => updShelf({ ...selShelf, label: e.target.value })}/>
-          <Button variant="secondary" className="w-full" onClick={() => setSelShelf(null)}>
+          <input
+            className="w-full bg-glass border border-glass px-2 py-1 rounded"
+            value={selShelf.label}
+            onChange={e=>updShelf({ ...selShelf, label:e.target.value })}
+          />
+          <Button variant="secondary" className="w-full" onClick={()=>setSelShelf(null)}>
             Close
           </Button>
         </div>
