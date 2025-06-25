@@ -1,3 +1,5 @@
+// src/types/index.ts
+
 export interface Product {
   id: string;
   name: string;
@@ -6,17 +8,25 @@ export interface Product {
   shelfId: string;
   stock: number;
 }
+
+export interface ProductOnShelf {
+  productId: string;
+  qty: number;
+}
+
 export type ShelfType = 'aisle' | 'endcap' | 'island' | 'checkout';
 
 export interface Shelf {
   id: string;           // uuid or nanoid
-  label: string;        // NEW  e.g. "#1"
+  label: string;        // e.g. "#1"
   type: ShelfType;
-  x: number;  y: number;
-  width: number; height: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
   zone: string;
   capacity: number;
-  products: any[];
+  products: ProductOnShelf[];
 }
 
 export interface Zone {
@@ -40,7 +50,6 @@ export interface Path {
   color: string;
 }
 
-
 export interface Beacon {
   id: string;
   name: string;
@@ -55,11 +64,11 @@ export interface DiscountRule {
   id: string;
   name: string;
   trigger: {
-    type: 'zone-enter' | 'product-view' | 'time-based'|'cart-total';
+    type: 'zone-enter' | 'product-view' | 'time-based' | 'cart-total';
     value: string;
   };
   condition: {
-    type: 'category' | 'product' | 'user-type'|'first-visit'|'item-count';
+    type: 'category' | 'product' | 'user-type' | 'first-visit' | 'item-count';
     value: string;
   };
   action: {
@@ -80,6 +89,7 @@ export interface Position {
   x: number;
   y: number;
 }
+
 export interface Road {
   id: string;
   x: number;
@@ -87,7 +97,21 @@ export interface Road {
   width: number;
   height: number;
 }
+
 export interface ZonePaletteDef {
   name: string;
   color: string;
+}
+
+/**
+ * Full Layout type matching your Zod schema:
+ */
+export interface Layout {
+  name: string;
+  createdAt: number;
+  scale: number;
+  offset: { x: number; y: number };
+  shelves: Shelf[];
+  zones: Zone[];
+  roads: Road[];
 }

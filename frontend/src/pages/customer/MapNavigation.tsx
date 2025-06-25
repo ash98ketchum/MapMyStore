@@ -1,260 +1,223 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Navigation, MapPin, Target, ArrowLeft, Gift } from 'lucide-react';
+// src/pages/customer/MapNavigation.tsx
+
+import React, { useState, useEffect, useRef } from 'react';
+import { ArrowLeft, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import Button from '../../components/ui/Button';
-import GlassCard from '../../components/ui/GlassCard';
-import { mockShelves, mockZones } from '../../data/mockData';
-import { Position } from '../../types';
+import { Layout, Position } from '../../types';
 
-const MapNavigation = () => {
-  const [userPosition, setUserPosition] = useState<Position>({ x: 60, y: 60 });
-  const [destination, setDestination] = useState<Position | null>(null);
-  const [showOffer, setShowOffer] = useState(false);
-  const [navigationInstructions, setNavigationInstructions] = useState<string>('');
-  const [currentZone, setCurrentZone] = useState<string>('entrance');
+const PAVER      = 32;
+const AISLE_COLOR = '#00D3FF';
+const ENDCAP_COLOR = '#FFB547';
+const ISLAND_COLOR = '#8B5CF6';
+const CHECKOUT_COLOR = '#EF4444';
+const ROAD_FILL  = '#b4b8bd';
+const ROAD_EDGE  = '#2f2f2f';
 
-  // Mock auto-movement
+export default function MapNavigation() {
+  const [layout, setLayout]     = useState<Layout | null>(null);
+  const [scale, setScale]       = useState(1);
+  const [offset, setOffset]     = useState({ x: 0, y: 0 });
+  const [panning, setPanning]   = useState(false);
+  const panStart = useRef({ x: 0, y: 0 });
+  const canvasRef = useRef<HTMLDivElement>(null);
+
+  // block native Ctrl+wheel zoom
   useEffect(() => {
-    const interval = setInterval(() => {
-      setUserPosition(prev => ({
-        x: prev.x + (Math.random() - 0.5) * 2,
-        y: prev.y + (Math.random() - 0.5) * 2
-      }));
-    }, 2000);
-
-    return () => clearInterval(interval);
+    const stop = (e: WheelEvent) => {
+      if (e.ctrlKey || e.metaKey) e.preventDefault();
+    };
+    window.addEventListener('wheel', stop, { passive: false });
+    return () => window.removeEventListener('wheel', stop);
   }, []);
 
-  // Check for zone entry and offers
+  // block native Ctrl+plus/minus zoom
   useEffect(() => {
-    const zone = mockZones.find(z => 
-      userPosition.x >= z.bounds.x && 
-      userPosition.x <= z.bounds.x + z.bounds.width &&
-      userPosition.y >= z.bounds.y && 
-      userPosition.y <= z.bounds.y + z.bounds.height
-    );
-
-    if (zone && zone.id !== currentZone) {
-      setCurrentZone(zone.id);
-      
-      // Trigger zone-based offers
-      if (zone.id === 'snacks') {
-        setShowOffer(true);
-        setTimeout(() => setShowOffer(false), 5000);
+    const blockKeys = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && ['+', '=', '-'].includes(e.key)) {
+        e.preventDefault();
       }
-    }
-  }, [userPosition, currentZone]);
+    };
+    window.addEventListener('keydown', blockKeys, { passive: false });
+    return () => window.removeEventListener('keydown', blockKeys);
+  }, []);
 
-  const navigateToShelf = (shelfId: string) => {
-    const shelf = mockShelves.find(s => s.id === shelfId);
-    if (shelf) {
-      setDestination({ x: shelf.x + shelf.width / 2, y: shelf.y + shelf.height / 2 });
-      setNavigationInstructions(`Navigate to ${shelf.type} shelf in ${shelf.zone} zone`);
-    }
+  // load layout
+  useEffect(() => {
+    fetch('/api/layout')
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(setLayout)
+      .catch(() => {/* no layout yet */});
+  }, []);
+
+  // zoom handler
+  const onWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    const factor = 1 - e.deltaY / 600;
+    const next   = Math.min(3, Math.max(0.4, scale * factor));
+    if (next === scale) return;
+
+    const rect = canvasRef.current!.getBoundingClientRect();
+    const px   = e.clientX - rect.left - offset.x;
+    const py   = e.clientY - rect.top  - offset.y;
+    const z    = next / scale;
+
+    setOffset({
+      x: offset.x + px - px * z,
+      y: offset.y + py - py * z
+    });
+    setScale(next);
   };
 
-  const calculateDistance = (pos1: Position, pos2: Position) => {
-    return Math.sqrt(Math.pow(pos2.x - pos1.x, 2) + Math.pow(pos2.y - pos1.y, 2));
+  // pan handlers
+  const startPan = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest('[data-draggable]')) return;
+    if (e.button !== 0) return;
+    e.preventDefault();
+    setPanning(true);
+    panStart.current = { x: e.clientX - offset.x, y: e.clientY - offset.y };
+    document.body.style.cursor = 'grabbing';
+  };
+  const doPan = (e: React.MouseEvent) => {
+    if (!panning) return;
+    setOffset({ x: e.clientX - panStart.current.x, y: e.clientY - panStart.current.y });
+  };
+  const endPan = () => {
+    setPanning(false);
+    document.body.style.cursor = 'default';
   };
 
-  const isNearDestination = destination ? calculateDistance(userPosition, destination) < 20 : false;
+  if (!layout) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        Loading map…
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="bg-glass backdrop-blur-md border-b border-glass p-4 flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <Link to="/customer/home">
-            <ArrowLeft className="h-6 w-6" />
-          </Link>
-          <div>
-            <h1 className="font-bold">Store Map</h1>
-            <p className="text-xs text-gray-400">Interactive navigation</p>
-          </div>
-        </div>
-        <div className="flex items-center space-x-2">
-          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-          <span className="text-xs text-gray-400">Live</span>
-        </div>
+      <div className="bg-glass backdrop-blur-md border-b border-glass p-4 flex items-center">
+        <Link to="/customer/home">
+          <ArrowLeft className="h-6 w-6 text-white" />
+        </Link>
+        <h1 className="ml-4 text-lg font-bold">Store Map</h1>
       </div>
 
-      {/* Map Container */}
-      <div className="flex-1 relative overflow-hidden bg-gray-900">
-        {/* Store Layout */}
-        <div className="absolute inset-0 p-4">
+      {/* Canvas Container */}
+      <div
+        className="relative flex-1 overflow-hidden bg-[#0C1C33]"
+        onWheel={onWheel}
+        onMouseDown={startPan}
+        onMouseMove={doPan}
+        onMouseUp={endPan}
+        onMouseLeave={endPan}
+        onContextMenu={e => e.preventDefault()}
+      >
+        {/* Blueprint grid */}
+        <div
+          className="absolute inset-0 z-0 pointer-events-none"
+          style={{
+            backgroundImage: `
+              repeating-linear-gradient(0deg, transparent 0 19px, #153055 19px 20px),
+              repeating-linear-gradient(90deg, transparent 0 19px, #153055 19px 20px),
+              repeating-linear-gradient(0deg, transparent 0 99px, #1d3b63 99px 100px),
+              repeating-linear-gradient(90deg, transparent 0 99px, #1d3b63 99px 100px)
+            `,
+            backgroundSize: '20px 20px, 20px 20px, 100px 100px, 100px 100px'
+          }}
+        />
+        {/* Subtle noise overlay */}
+        <div
+          className="absolute inset-0 z-0 pointer-events-none opacity-[0.03]"
+          style={{
+            backgroundImage:
+              'url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAIAAABMXPacAAAAGUlEQVR4nO3BAQ0AAADCoPdPbQ43oAAAAAAAAACAf8YBAAB+fAsGAAAAAElFTkSuQmCC")',
+          }}
+        />
+
+        {/* Pan/zoom surface */}
+        <div
+          ref={canvasRef}
+          className="relative w-full h-full z-10 overflow-visible"
+          style={{
+            transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`,
+            transformOrigin: '0 0',
+            transition: 'transform 80ms ease-out',
+          }}
+        >
           {/* Zones */}
-          {mockZones.map((zone) => (
+          {layout.zones.map(z => (
             <div
-              key={zone.id}
-              className="absolute border border-dashed border-opacity-50 rounded-lg"
+              key={z.id}
+              data-draggable
+              className="absolute border-2 border-dashed"
               style={{
-                left: zone.bounds.x,
-                top: zone.bounds.y,
-                width: zone.bounds.width,
-                height: zone.bounds.height,
-                borderColor: zone.color,
-                backgroundColor: zone.color + '15'
+                left: z.x, top: z.y,
+                width: z.width, height: z.height,
+                borderColor: z.color,
+                backgroundColor: `${z.color}33`
               }}
             >
-              <div 
-                className="absolute -top-5 left-1 text-xs font-medium px-2 py-1 rounded"
-                style={{ backgroundColor: zone.color + '30', color: zone.color }}
+              <div
+                className="absolute inset-0 flex items-center justify-center text-xs font-semibold pointer-events-none"
+                style={{ color: z.color }}
               >
-                {zone.name}
+                {z.name}
               </div>
             </div>
+          ))}
+
+          {/* Roads */}
+          {layout.roads.map(r => (
+            <div
+              key={r.id}
+              className="absolute"
+              style={{
+                left: r.x, top: r.y,
+                width: r.width, height: r.height,
+                backgroundColor: ROAD_FILL,
+                border: `2px solid ${ROAD_EDGE}`,
+                boxSizing: 'border-box'
+              }}
+            />
           ))}
 
           {/* Shelves */}
-          {mockShelves.map((shelf) => (
-            <motion.div
-              key={shelf.id}
-              className="absolute bg-gray-600 rounded cursor-pointer hover:bg-gray-500 transition-colors"
-              style={{
-                left: shelf.x,
-                top: shelf.y,
-                width: shelf.width,
-                height: shelf.height,
-              }}
-              onClick={() => navigateToShelf(shelf.id)}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <div className="w-full h-full flex items-center justify-center text-white text-xs">
-                {shelf.id.split('-')[1]}
-              </div>
-            </motion.div>
-          ))}
-
-          {/* User Position */}
-          <motion.div
-            className="absolute w-4 h-4 bg-accent rounded-full shadow-glow z-10"
-            style={{
-              left: userPosition.x - 8,
-              top: userPosition.y - 8,
-            }}
-            animate={{
-              scale: [1, 1.2, 1],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          >
-            <div className="absolute inset-0 bg-accent rounded-full animate-ping opacity-75"></div>
-          </motion.div>
-
-          {/* Destination */}
-          {destination && (
-            <motion.div
-              className="absolute w-6 h-6 z-10"
-              style={{
-                left: destination.x - 12,
-                top: destination.y - 12,
-              }}
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-            >
-              <MapPin className="h-6 w-6 text-highlight" />
-            </motion.div>
-          )}
-
-          {/* Navigation Path */}
-          {destination && (
-            <svg className="absolute inset-0 w-full h-full pointer-events-none z-5">
-              <motion.line
-                x1={userPosition.x}
-                y1={userPosition.y}
-                x2={destination.x}
-                y2={destination.y}
-                stroke="#00D3FF"
-                strokeWidth="2"
-                strokeDasharray="5,5"
-                initial={{ pathLength: 0 }}
-                animate={{ 
-                  pathLength: 1,
-                  strokeDashoffset: [0, -10]
+          {layout.shelves.map(s => {
+            const fill =
+              s.type === 'aisle'    ? AISLE_COLOR :
+              s.type === 'endcap'   ? ENDCAP_COLOR :
+              s.type === 'island'   ? ISLAND_COLOR :
+              s.type === 'checkout' ? CHECKOUT_COLOR :
+              AISLE_COLOR;
+            return (
+              <div
+                key={s.id}
+                data-draggable
+                className="absolute cursor-pointer flex items-center justify-center"
+                style={{
+                  left:            s.x,
+                  top:             s.y,
+                  width:           s.width,
+                  height:          s.height,
+                  backgroundColor: fill + '33',
+                  border:          `2px solid ${fill}`,
+                  borderRadius:    '4px',
+                  boxSizing:       'border-box'
                 }}
-                transition={{
-                  pathLength: { duration: 1 },
-                  strokeDashoffset: { duration: 2, repeat: Infinity, ease: "linear" }
-                }}
-              />
-            </svg>
-          )}
-        </div>
-      </div>
+              >
+                <span className="text-[10px] text-white pointer-events-none">
+                  {s.label}
+                </span>
+              </div>
+            );
+          })}
 
-      {/* Navigation Instructions */}
-      {navigationInstructions && (
-        <motion.div
-          className="mx-4 mb-4"
-          initial={{ y: 100, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-        >
-          <GlassCard className="p-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-accent bg-opacity-20 rounded-full flex items-center justify-center">
-                <Navigation className="h-5 w-5 text-accent" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium">{navigationInstructions}</p>
-                <p className="text-xs text-gray-400 mt-1">
-                  {isNearDestination ? '🎉 You have arrived!' : 'Follow the blue path'}
-                </p>
-              </div>
-            </div>
-          </GlassCard>
-        </motion.div>
-      )}
-
-      {/* Zone Offer Popup */}
-      {showOffer && (
-        <motion.div
-          className="absolute bottom-20 left-4 right-4"
-          initial={{ y: 100, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 100, opacity: 0 }}
-        >
-          <GlassCard className="p-4 bg-highlight bg-opacity-10 border-highlight">
-            <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-highlight bg-opacity-20 rounded-full flex items-center justify-center">
-                <Gift className="h-6 w-6 text-highlight" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-bold text-highlight">Special Offer!</h3>
-                <p className="text-sm">15% off all snacks in this zone</p>
-                <Button variant="highlight" size="sm" className="mt-2">
-                  Add to Cart
-                </Button>
-              </div>
-            </div>
-          </GlassCard>
-        </motion.div>
-      )}
-
-      {/* Quick Actions */}
-      <div className="p-4 bg-glass backdrop-blur-md border-t border-glass">
-        <div className="flex items-center justify-between">
-          <div className="text-xs text-gray-400">
-            Current Zone: <span className="text-white capitalize">{currentZone}</span>
-          </div>
-          <div className="flex space-x-2">
-            <Button variant="secondary" size="sm" icon={Target}>
-              Find Product
-            </Button>
-            <Link to="/customer/cart">
-              <Button variant="primary" size="sm">
-                Cart (0)
-              </Button>
-            </Link>
-          </div>
+          {/* (Optional) User Position & Destination Pin */}
+          {/* ... */}
         </div>
       </div>
     </div>
   );
-};
-
-export default MapNavigation;
+}

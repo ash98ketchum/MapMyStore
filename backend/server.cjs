@@ -2,7 +2,7 @@
  *  Single-layout JSON API
  *  – GET  /api/layout   → return saved layout   (404 if none)
  *  – PUT  /api/layout   → validate & overwrite
- *  – GET  /api/health   → { ok: true }          (for pings)
+ *  – GET  /api/health   → { ok: true }
  * ------------------------------------------------------------------ */
 
 const express = require('express');
@@ -35,13 +35,13 @@ const shelfSchema = z.object({
 });
 
 const zoneSchema = z.object({
-  id:    z.string(),
-  name:  z.string(),
-  x:     z.number(),
-  y:     z.number(),
-  width: z.number(),
-  height:z.number(),
-  color: z.string(),
+  id:     z.string(),
+  name:   z.string(),
+  x:      z.number(),
+  y:      z.number(),
+  width:  z.number(),
+  height: z.number(),
+  color:  z.string(),
 });
 
 const roadSchema = z.object({
@@ -65,7 +65,7 @@ const layoutSchema = z.object({
 /* -------- helper fns -------------------------------------------- */
 async function readLayout() {
   try { return JSON.parse(await fs.readFile(DATA_FILE, 'utf8')); }
-  catch { return null; }          // no file yet / unreadable
+  catch { return null; }
 }
 
 async function writeLayout(layout) {
@@ -76,19 +76,19 @@ async function writeLayout(layout) {
 /* -------- express setup ----------------------------------------- */
 const app = express();
 app.use(cors());
-app.use(express.json({ limit: '2mb' }));          // plenty for one layout
+app.use(express.json({ limit: '2mb' }));
 
-/* health-check */
+// health-check
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
 
-/* GET layout */
+// GET layout
 app.get('/api/layout', async (_req, res) => {
   const layout = await readLayout();
   if (!layout) return res.sendStatus(404);
   res.json(layout);
 });
 
-/* PUT layout */
+// PUT layout
 app.put('/api/layout', async (req, res) => {
   const parsed = layoutSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -96,14 +96,13 @@ app.put('/api/layout', async (req, res) => {
   }
   try {
     await writeLayout(parsed.data);
-    res.sendStatus(204);                       // success, no body
+    res.sendStatus(204);
   } catch (err) {
     console.error('[layout-save]', err);
     res.status(500).json({ error: 'Failed to save layout' });
   }
 });
 
-/* -------- boot --------------------------------------------------- */
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () =>
   console.log(`🗺️  Layout API running  →  http://localhost:${PORT}`)
