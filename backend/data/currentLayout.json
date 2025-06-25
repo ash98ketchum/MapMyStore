@@ -1,6 +1,6 @@
 {
   "name": "Current Layout",
-  "createdAt": 1750794927981,
+  "createdAt": 1750842380970,
   "scale": 0.7551018709503956,
   "offset": {
     "x": 121.2226332231894,
@@ -30,6 +30,166 @@
       "zone": "unassigned",
       "capacity": 50,
       "products": []
+    },
+    {
+      "id": "v3gUm4cgZdFBphUduwKwc",
+      "label": "oil",
+      "type": "aisle",
+      "x": 589.8649795628589,
+      "y": 166.08110044567746,
+      "width": 120,
+      "height": 40,
+      "zone": "unassigned",
+      "capacity": 50,
+      "products": [
+        {
+          "productId": "6",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "id": "Q8VuFZp-2-8hGV1ozvdZs",
+      "label": "End Cap 3",
+      "type": "endcap",
+      "x": 148.864880356542,
+      "y": 81.32432462224119,
+      "width": 120,
+      "height": 40,
+      "zone": "unassigned",
+      "capacity": 50,
+      "products": [
+        {
+          "productId": "12",
+          "qty": 1
+        },
+        {
+          "productId": "13",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "id": "ld9B6WgDyYFcHrYGncR7n",
+      "label": "End Cap 4",
+      "type": "endcap",
+      "x": 148.864880356542,
+      "y": 160.7838019567127,
+      "width": 120,
+      "height": 40,
+      "zone": "unassigned",
+      "capacity": 50,
+      "products": [
+        {
+          "productId": "11",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "id": "WTHop3vKxRVK9jgs8p9J8",
+      "label": "Island 3",
+      "type": "island",
+      "x": 595.1622780518237,
+      "y": -48.45948835739563,
+      "width": 51.13511964345801,
+      "height": 40,
+      "zone": "unassigned",
+      "capacity": 50,
+      "products": [
+        {
+          "productId": "22",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "id": "47eQb0YIrE6rpL3SIAcGh",
+      "label": "Aisle 18",
+      "type": "aisle",
+      "x": 470.67576356115165,
+      "y": -48.45948835739563,
+      "width": 120,
+      "height": 40,
+      "zone": "unassigned",
+      "capacity": 50,
+      "products": [
+        {
+          "productId": "28",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "id": "XF3Ond57KDuQBIjJDhBNd",
+      "label": "Aisle 19",
+      "type": "aisle",
+      "x": 441.5406218718454,
+      "y": 163.43245120119508,
+      "width": 120,
+      "height": 40,
+      "zone": "unassigned",
+      "capacity": 50,
+      "products": [
+        {
+          "productId": "5",
+          "qty": 2
+        },
+        {
+          "productId": "10",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "id": "8OO7VtP5zgi5wWHydae6x",
+      "label": "Aisle 20",
+      "type": "aisle",
+      "x": 393.86493547116254,
+      "y": 294.5405888030731,
+      "width": 120,
+      "height": 40,
+      "zone": "unassigned",
+      "capacity": 50,
+      "products": [
+        {
+          "productId": "37",
+          "qty": 1
+        },
+        {
+          "productId": "32",
+          "qty": 1
+        },
+        {
+          "productId": "36",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "id": "v79V0MYo018O73W76Qfnh",
+      "label": "Aisle 21",
+      "type": "aisle",
+      "x": 785.8650236545553,
+      "y": -28.594619023777753,
+      "width": 120,
+      "height": 40,
+      "zone": "unassigned",
+      "capacity": 50,
+      "products": [
+        {
+          "productId": "3",
+          "qty": 1
+        },
+        {
+          "productId": "4",
+          "qty": 1
+        },
+        {
+          "productId": "7",
+          "qty": 1
+        }
+      ]
     }
   ],
   "zones": [
