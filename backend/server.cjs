@@ -102,7 +102,30 @@ app.put('/api/layout', async (req, res) => {
     res.status(500).json({ error: 'Failed to save layout' });
   }
 });
+/* -------- POST save-cart ---------------------------------------- */
+app.post('/api/save-cart', async (req, res) => {
+  const cartData = req.body;
+  if (!Array.isArray(cartData)) {
+    return res.status(400).json({ success: false, message: 'Expected array of cart items' });
+  }
 
+  const timestamp = Date.now();
+  const fileName  = `cart-${timestamp}.json`;
+  const outDir    = DATA_DIR;  // use same data/ directory
+  const filePath  = path.join(outDir, fileName);
+
+  try {
+    // ensure directory exists
+    await fs.mkdir(outDir, { recursive: true });
+    // write file
+    await fs.writeFile(filePath, JSON.stringify(cartData, null, 2), 'utf8');
+    console.log(`Cart saved to ${filePath}`);
+    res.json({ success: true, message: 'Cart saved', file: fileName });
+  } catch (err) {
+    console.error('[save-cart]', err);
+    res.status(500).json({ success: false, message: 'Failed to save cart' });
+  }
+});
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () =>
   console.log(`🗺️  Layout API running  →  http://localhost:${PORT}`)

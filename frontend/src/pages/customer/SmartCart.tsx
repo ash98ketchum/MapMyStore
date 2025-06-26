@@ -13,6 +13,31 @@ const SmartCart: React.FC = () => {
   const tax = subtotal * 0.08;
   const total = subtotal + tax;
 
+  const handleCheckout = async () => {
+  try {
+    const res = await fetch('http://localhost:4000/api/save-cart', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cartItems),
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(errorText);
+    }
+
+    const json = await res.json();
+    if (json.success) {
+      alert(`🛒 Cart saved as ${json.file}`);
+    } else {
+      alert(`❌ Save failed: ${json.message}`);
+    }
+  } catch (err: any) {
+    alert(`❌ Error saving cart: ${err.message}`);
+    console.error(err);
+  }
+};
+
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
@@ -31,7 +56,12 @@ const SmartCart: React.FC = () => {
             <Link to="/customer/home"><Button variant="primary">Start Shopping</Button></Link>
           </div>
         ) : cartItems.map((item: CartItem, idx: number) => (
-          <motion.div key={item.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.1 }}>
+          <motion.div
+            key={item.id}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: idx * 0.1 }}
+          >
             <GlassCard className="p-4">
               <div className="flex items-start space-x-4">
                 <MapPin className="h-6 w-6 text-gray-400" />
@@ -42,19 +72,18 @@ const SmartCart: React.FC = () => {
                   <div className="flex justify-between items-center mt-2">
                     <div className="flex items-center space-x-2">
                       <button
-                            onClick={() => updateQuantity(item.id, -1)}
-                            className="w-8 h-8 bg-glass rounded-full flex items-center justify-center hover:bg-white hover:bg-opacity-10 transition-colors"
-                          >
-                            <Minus className="h-4 w-4" />
-                          </button>
-                          <span className="font-medium">{item.quantity}</span>
-                          <button
-                            onClick={() => updateQuantity(item.id, 1)}
-                            className="w-8 h-8 bg-glass rounded-full flex items-center justify-center hover:bg-white hover:bg-opacity-10 transition-colors"
-                          >
-                            <Plus className="h-4 w-4" />
-                          </button>
-
+                        onClick={() => updateQuantity(item.id, -1)}
+                        className="w-8 h-8 bg-glass rounded-full flex items-center justify-center hover:bg-white hover:bg-opacity-10 transition-colors"
+                      >
+                        <Minus className="h-4 w-4" />
+                      </button>
+                      <span className="font-medium">{item.quantity}</span>
+                      <button
+                        onClick={() => updateQuantity(item.id, 1)}
+                        className="w-8 h-8 bg-glass rounded-full flex items-center justify-center hover:bg-white hover:bg-opacity-10 transition-colors"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </button>
                     </div>
                     <div className="text-right">
                       <p className="font-semibold">${(item.price * item.quantity).toFixed(2)}</p>
@@ -64,14 +93,15 @@ const SmartCart: React.FC = () => {
 
                   <div className="mt-3 flex justify-between items-center border-t border-glass pt-2">
                     <Link to="/customer/map" className="flex items-center text-accent text-sm">
-                      <MapPin className="h-4 w-4" /><span>{item.shelfId}</span>
+                      <MapPin className="h-4 w-4" />
+                      <span>{item.shelfId}</span>
                     </Link>
                     <button
-                          onClick={() => removeItem(item.id)}
-                          className="text-red-400 hover:text-red-300 transition-colors"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                      onClick={() => removeItem(item.id)}
+                      className="text-red-400 hover:text-red-300 transition-colors"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   </div>
                 </div>
               </div>
@@ -82,13 +112,27 @@ const SmartCart: React.FC = () => {
 
       {/* Footer */}
       {cartItems.length > 0 && (
-        <motion.div className="bg-glass border-t border-glass p-4 space-y-4" initial={{ y: 100 }} animate={{ y: 0 }}>
+        <motion.div
+          className="bg-glass border-t border-glass p-4 space-y-4"
+          initial={{ y: 100 }}
+          animate={{ y: 0 }}
+        >
           <div className="text-sm space-y-1">
             <div className="flex justify-between"><span>Subtotal:</span><span>${subtotal.toFixed(2)}</span></div>
             <div className="flex justify-between"><span>Tax:</span><span>${tax.toFixed(2)}</span></div>
-            <div className="flex justify-between font-bold text-lg pt-2 border-t border-glass"><span>Total:</span><span>${total.toFixed(2)}</span></div>
+            <div className="flex justify-between font-bold text-lg pt-2 border-t border-glass">
+              <span>Total:</span><span>${total.toFixed(2)}</span>
+            </div>
           </div>
-          <Button variant="primary" size="lg" icon={CreditCard} className="w-full">Checkout</Button>
+          <Button
+            variant="primary"
+            size="lg"
+            icon={CreditCard}
+            className="w-full"
+            onClick={handleCheckout}
+          >
+            Checkout
+          </Button>
         </motion.div>
       )}
     </div>
