@@ -158,12 +158,11 @@ export default function FloorPlanDesigner() {
         zone:'unassigned', capacity:50, products: [] as ShelfProduct[],
       }];
     });
-
-  const addZone = (name:string, color:string) =>
-    setZones(a => [...a, {
-      id:`zone-${nanoid()}`, name, color,
-      x:100, y:100, width:180, height:140,
-    }]);
+const addZone = (name: string, color: string) =>
+  setZones(a => [...a, {
+    id: `zone-${nanoid()}`, name, color,
+    x: 100, y: 100, width: 180, height: 140,
+  }]);
 
   /* ─── first road tile ─── */
   const placeRoadStart = (e: React.MouseEvent) => {
@@ -289,7 +288,7 @@ export default function FloorPlanDesigner() {
       <aside className="w-64 bg-glass p-4 space-y-3 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700">
         <h2 className="font-bold">Palette</h2>
         {Object.keys(shelfDefs).map(t => (
-          <Button key={t} className="w-full" onClick={() => addShelf(t as ShelfType)}>
+          <Button key={t} className="bg-sky-500 hover:bg-sky-600 text-white font-bold w-full p-2 rounded"onClick={() => addShelf(t as ShelfType)}>
             + {shelfDefs[t as ShelfType].name}
           </Button>
         ))}
@@ -376,7 +375,7 @@ export default function FloorPlanDesigner() {
           className="relative w-full h-full overflow-visible z-10"
           onClick={placeRoadStart}
           style={{
-            transform: `translate(${offset.x}px,${offset.y}px) scale(${scale})`,
+            transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`,
             transformOrigin: '0 0',
             transition: 'transform 80ms ease-out',
           }}
@@ -389,10 +388,10 @@ export default function FloorPlanDesigner() {
               onSelect={() => { setSelZoneId(z.id); clearSel('zone'); }}
               onChange={(id,nx,ny,nw,nh)=>updZone({ ...z,x:nx,y:ny,width:nw,height:nh })}
               style={{
-                background:`${z.color}33`,
-                border:`2px dashed ${selZoneId===z.id? '#38bdf8': z.color}`,
-                zIndex:10,
-              }}>
+              background: `${z.color}33`,
+              border: `2px dashed ${selZoneId === z.id ? '#38bdf8' : z.color}`,
+              zIndex: 10,
+            }}>
               <div className="absolute inset-0 flex items-center justify-center text-xs font-semibold pointer-events-none"
                    style={{ color: selZoneId===z.id? '#38bdf8': z.color }}>
                 {z.name}
@@ -408,9 +407,10 @@ export default function FloorPlanDesigner() {
               onSelect={()=>{ setSelShelf(s); clearSel('shelf'); }}
               onChange={(id,nx,ny,nw,nh)=>updShelf({ ...s,x:nx,y:ny,width:nw,height:nh })}
               style={{
-                background:`linear-gradient(135deg, ${shelfDefs[s.type].color} 0%, #ffffff33 100%)`,
-                zIndex:20,
-              }}>
+              background: `linear-gradient(135deg, ${shelfDefs[s.type].color} 0%, #ffffff33 100%)`,
+              zIndex: 20,
+            }}
+>
               <div className="absolute inset-0 flex items-center justify-center text-white/90 text-xs font-bold pointer-events-none">
                 {s.label}
               </div>
@@ -431,16 +431,17 @@ export default function FloorPlanDesigner() {
                         roadGroup.includes(t.id)?{...t,x:t.x+nx-r.x,y:t.y+ny-r.y}:t))
                     : updRoad({ ...r,x:nx,y:ny })
                 )}
-                style={{
-                  background:P_FILL,
-                  border:`3px solid ${P_EDGE}`,
-                  borderRadius:4,
+               style={{
+                  background: P_FILL,
+                  border: `3px solid ${P_EDGE}`,
+                  borderRadius: 4,
                   boxShadow: sel
                     ? '0 0 6px 2px #38bdf8, 0 2px 6px #0006'
                     : '0 2px 4px #0004',
-                  transition:'box-shadow .15s',
-                  zIndex:30,
+                  transition: 'box-shadow .15s',
+                  zIndex: 30,
                 }}
+
               />
             );
           })}
@@ -449,13 +450,17 @@ export default function FloorPlanDesigner() {
 
       {/* ── shelf side panel ── */}
       {selShelf && (
-        <div className="w-80 bg-glass border-l border-glass p-4 space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="font-bold text-lg">Edit Shelf</h3>
-            <Button size="icon" variant="secondary" onClick={() => setSelShelf(null)}>
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+  <div className="w-80 bg-white/10 border-l border-white/20 text-white p-4 space-y-4 backdrop-blur">
+    <div className="flex justify-between items-center">
+      <h3 className="font-bold text-lg">Edit Shelf</h3>
+     <Button
+        size="icon"
+        variant="secondary"
+        icon={<X className="h-4 w-4 text-white" />}
+        onClick={() => setSelShelf(null)}
+/>
+    </div>
+
 
           {/* ---------- label (rename) ---------- */}
           <label className="text-xs font-semibold">Label</label>
@@ -520,11 +525,11 @@ export default function FloorPlanDesigner() {
                             className="w-14 bg-glass border border-glass rounded text-right px-1 py-0.5"
                           />
                           <Button
-                            variant="secondary" size="icon"
-                            onClick={()=>delProd(p.productId)}
-                          >
-                            <Trash size={12}/>
-                          </Button>
+                            variant="secondary"
+                            size="icon"
+                            icon={<Trash size={12} />}
+                            onClick={() => delProd(p.productId)}
+                              />
                         </span>
                       </li>
                     );

@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Search,
   Map,
+  Bell,
   ShoppingCart,
   LogOut,
   Package,
@@ -13,12 +14,45 @@ import {
 import { useNavigate } from 'react-router-dom';
 import Button from '../../components/ui/Button';
 import GlassCard from '../../components/ui/GlassCard';
-import { mockProducts } from '../../data/mockData';
+import { mockProducts, mockDiscountRules } from '../../data/mockData';
 
 const Home: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [cartItems] = useState(0);
+  const [cartItems, setCartItems] = useState(0);
+  const [notifications, setNotifications] = useState<string[]>([]);  
+  const [showDropdown, setShowDropdown] = useState(false);
+
+ useEffect(() => {
+  const discountRules = mockDiscountRules
+    .filter(rule => rule.active)
+    .sort((a, b) => {
+      const getValue = (rule: typeof mockDiscountRules[0]) =>
+        rule.action.type === 'percentage' ? rule.action.value :
+        rule.action.type === 'fixed-amount' ? rule.action.value / 10 : 0;
+      return getValue(b) - getValue(a);
+    })
+    .slice(0, 2);
+
+  const formatted = discountRules.map(rule => {
+    const value = rule.action.value;
+    if (rule.action.type === 'percentage') {
+      return `🔥 ${rule.name}: ${value}% off on ${rule.condition.value}!`;
+    } else {
+      return `💸 ${rule.name}: ₹${value} off when you ${rule.trigger.type.replace('-', ' ')}`;
+    }
+  });
+
+  setNotifications(formatted);
+}, []);
+
+    const filteredProducts = mockProducts.filter(product =>
+    product.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   const navigate = useNavigate();
+  const handleLogout = () => {
+    navigate('/signin/customer');
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -31,6 +65,33 @@ const Home: React.FC = () => {
           </div>
           <div className="flex items-center space-x-3">
             <div className="relative">
+              {/* Notification Bell */}
+            <div className="relative">
+              <button
+                onClick={() => setShowDropdown((prev) => !prev)}
+                className="relative p-1 hover:text-white transition-colors"
+              >
+                <Bell className="h-6 w-6 text-gray-400" />
+                {notifications.length > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 h-5 w-5 bg-accent rounded-full flex items-center justify-center text-xs text-primary">
+                    {notifications.length}
+                  </span>
+                )}
+              </button>
+              {showDropdown && (
+                <div className="absolute top-full right-0 mt-2 w-72 bg-black backdrop-blur-md border border-glass rounded-xl shadow-xl p-4 z-[100]">
+                  <h4 className="font-semibold text-sm text-white mb-2">Notifications</h4>
+                  <ul className="space-y-2 max-h-40 overflow-auto">
+                    {notifications.map((notif, idx) => (
+                      <li key={idx} className="text-sm text-gray-200 bg-white/10 rounded-lg p-2">
+                        {notif}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+
               <ShoppingCart className="h-6 w-6 text-gray-400" />
               {cartItems > 0 && (
                 <span className="absolute -top-2 -right-2 h-5 w-5 bg-accent rounded-full flex items-center justify-center text-xs text-primary">

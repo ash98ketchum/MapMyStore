@@ -2,28 +2,16 @@ import React from 'react';
 import { motion, type HTMLMotionProps } from 'framer-motion';
 import type { LucideIcon } from 'lucide-react';
 
-/* ------------------------------------------------------------------
- * Button
- *  – variant : visual style  (adds "destructive")
- *  – size    : sm | md | lg | icon
- *              "icon" = 32×32 square, no text label by default
- * ------------------------------------------------------------------ */
-
-/** Base props that a <motion.button> already accepts */
 type MotionButtonProps = HTMLMotionProps<'button'>;
 
 export interface ButtonProps extends MotionButtonProps {
-  /** visible label (ignored for `size="icon"`) */
-  children: React.ReactNode;
-  /** colour scheme */
+  children?: React.ReactNode;
   variant?: 'primary' | 'secondary' | 'accent' | 'highlight' | 'destructive';
-  /** dimensions */
-  size?:    'sm' | 'md' | 'lg' | 'icon';
-  /** optional Lucide icon displayed left of the label */
-  icon?:    LucideIcon;
+  size?: 'sm' | 'md' | 'lg' | 'icon';
+  /** Accept either a JSX element or a LucideIcon component */
+  icon?: React.ReactNode | LucideIcon;
 }
 
-/* ----- utility class maps ---------------------------------------- */
 const variants: Record<NonNullable<ButtonProps['variant']>, string> = {
   primary:     'bg-accent hover:bg-accent-600 text-primary shadow-glow',
   secondary:   'bg-glass hover:bg-white/20 text-white border border-glass',
@@ -33,22 +21,33 @@ const variants: Record<NonNullable<ButtonProps['variant']>, string> = {
 };
 
 const sizes: Record<NonNullable<ButtonProps['size']>, string> = {
-  sm:   'px-3 py-2   text-sm',
+  sm:   'px-3 py-2 text-sm',
   md:   'px-4 py-2.5 text-sm',
-  lg:   'px-6 py-3   text-base',
+  lg:   'px-6 py-3 text-base',
   icon: 'p-2 w-8 h-8 flex items-center justify-center',
 };
 
 export default function Button({
   children,
   variant = 'primary',
-  size    = 'md',
-  icon:   Icon,
+  size = 'md',
+  icon,
   className = '',
-  disabled  = false,
-  type = 'button',           // keep normal <button> semantics
-  ...rest                     // all other motion / HTML props
+  disabled = false,
+  type = 'button',
+  ...rest
 }: ButtonProps) {
+  const renderIcon = () => {
+    if (!icon) return null;
+
+    // If it’s a JSX element (e.g. <X className="..." />), render as is
+    if (React.isValidElement(icon)) return icon;
+
+    // If it’s a LucideIcon component (e.g. icon={X}), render it with defaults
+    const IconComponent = icon as LucideIcon;
+    return <IconComponent className="h-4 w-4" />;
+  };
+
   return (
     <motion.button
       type={type}
@@ -62,9 +61,9 @@ export default function Button({
         sizes[size],
         className,
       ].join(' ')}
-      {...rest}      
+      {...rest}
     >
-      {Icon && <Icon className="h-4 w-4" />}
+      {renderIcon()}
       {size !== 'icon' && <span>{children}</span>}
     </motion.button>
   );
