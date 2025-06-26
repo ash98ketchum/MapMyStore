@@ -8,6 +8,7 @@ export interface Product {
   shelfId: string;
   stock: number;
   imageUrl?: string;
+  price?: number;
 }
 
 export interface ProductOnShelf {

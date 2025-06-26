@@ -1,15 +1,25 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, MapPin, ShoppingCart, Star, Package } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import Button from '../../components/ui/Button';
 import GlassCard from '../../components/ui/GlassCard';
 import { mockProducts, mockShelves } from '../../data/mockData';
+import { useCart, CartItem } from '../../pages/customer/CartContext'; 
 
 const ProductDetail = () => {
+  const { addToCart, cartItems } = useCart();
+  const [isAdded, setIsAdded] = useState(false);
   const { id } = useParams();
   const product = mockProducts.find(p => p.id === id);
   const shelf = mockShelves.find(s => s.id === product?.shelfId);
+
+useEffect(() => {
+  if (!product) return;
+  const inCart = cartItems.some((item: CartItem) => item.id === product.id);
+  setIsAdded(inCart);
+}, [cartItems, product]);
+
 
   if (!product) {
     return (
@@ -115,10 +125,28 @@ const ProductDetail = () => {
             </Button>
           </Link>
           
-          <Button variant="secondary" size="lg" icon={ShoppingCart} className="w-full">
-            Add to Smart Cart
-          </Button>
-          
+            <Button
+              variant="secondary"
+              size="lg"
+              icon={ShoppingCart}
+              className={`w-full ${isAdded ? 'bg-green-500 text-white hover:bg-green-600' : ''}`}
+              disabled={isAdded}
+              onClick={() => {
+                addToCart({
+                  id: product.id,
+                  name: product.name,
+                  category: product.category,
+                  quantity: 1,
+                  price: product.price ?? 4.99,
+                  shelfId: product.shelfId,
+                });
+                setIsAdded(true);
+              }}
+            >
+              {isAdded ? '✔ Added' : 'Add to Smart Cart'}
+            </Button>
+
+
           <Button variant="highlight" size="lg" className="w-full">
             Mark as Found
           </Button>

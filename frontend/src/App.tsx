@@ -14,6 +14,7 @@ import Home from './pages/customer/Home';
 import MapNavigation from './pages/customer/MapNavigation';
 import ProductDetail from './pages/customer/ProductDetail';
 import SmartCart from './pages/customer/SmartCart';
+import { CartProvider } from './pages/customer/CartContext';  
 
 import SignInCustomer from './components/auth/SignInCustomer';
 import SignInAdmin from './components/auth/SignInAdmin';
@@ -21,6 +22,7 @@ import SignInAdmin from './components/auth/SignInAdmin';
 function App() {
   return (
     <div className="min-h-screen bg-primary text-white">
+        <CartProvider>
       <Routes>
         {/* Start with admin dashboard */}
         <Route path="/" element={<Navigate to="/admin" replace />} />
@@ -50,6 +52,7 @@ function App() {
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </CartProvider>
     </div>
   );
 }
