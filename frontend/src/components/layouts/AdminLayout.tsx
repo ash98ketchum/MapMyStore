@@ -23,7 +23,7 @@ const AdminLayout = () => {
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const location = useLocation();
   const navigate = useNavigate();
-  
+
 interface Product {
   id: string;
   name: string;
@@ -136,10 +136,10 @@ useEffect(() => {
 
           {/* Right: Bell + Buttons */}
           <div className="flex items-center space-x-4">
-            <button className="relative p-2 text-gray-400 hover:text-white transition-colors">
+            {/* <button className="relative p-2 text-gray-400 hover:text-white transition-colors">
               <Bell className="h-5 w-5" />
               <span className="absolute -top-1 -right-1 h-3 w-3 bg-highlight rounded-full"></span>
-            </button>
+            </button> */}
 
             <Link to="/admin/floor-designer">
               <Button variant="primary" icon={MapPin}>Open Floor Designer</Button>
@@ -162,7 +162,7 @@ useEffect(() => {
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: index * 0.1 }}
         >
-            <Link to={`/admin/products/${product.id}`}>
+         <Link to={`/admin/products/${product.id}`}>
             <GlassCard className="p-4 flex items-center space-x-4 hover:bg-white hover:bg-opacity-10 transition-all">
               <div className="w-12 h-12 bg-glass rounded-lg flex items-center justify-center">
                 <Package className="h-6 w-6 text-gray-400" />

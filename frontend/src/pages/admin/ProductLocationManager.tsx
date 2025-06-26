@@ -144,13 +144,13 @@ const ProductLocationManager = () => {
                         >
                           Edit
                         </Button>
-                        <Button
+                        {/* <Button
                           variant="secondary"
                           size="sm"
                           icon={MapPin}
                         >
                           Assign
-                        </Button>
+                        </Button> */}
                       </div>
                     </td>
                   </motion.tr>
