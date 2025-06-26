@@ -33,7 +33,7 @@ const Welcome = () => {
           <div className="w-16 h-16 bg-accent rounded-full flex items-center justify-center mx-auto mb-4">
             <Scan className="h-8 w-8 text-primary" />
           </div>
-          <h1 className="text-2xl font-bold mb-2">Welcome to SmartNav</h1>
+          <h1 className="text-2xl font-bold mb-2">Welcome to MapMyStore</h1>
           <p className="text-gray-400">Your intelligent shopping companion</p>
         </motion.div>
       </div>

@@ -42,8 +42,15 @@ const ProductDetail = () => {
           animate={{ opacity: 1, scale: 1 }}
         >
           <GlassCard className="p-8">
-            <div className="aspect-square bg-glass rounded-xl flex items-center justify-center mb-4">
-              <Package className="h-24 w-24 text-gray-400" />
+            <div className="aspect-square bg-glass rounded-xl overflow-hidden mb-4">
+              <img
+                src={product.imageUrl || '/fallback-image.png'} // fallback is optional
+                alt={product.name}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                e.currentTarget.src = '/fallback-image.png'; // fallback if image fails
+                }}
+              />
             </div>
             <div className="text-center">
               <h2 className="text-2xl font-bold mb-2">{product.name}</h2>
@@ -88,6 +95,7 @@ const ProductDetail = () => {
                   <span className={`font-medium ${product.stock > 10 ? 'text-green-400' : 'text-yellow-400'}`}>
                     {product.stock} units
                   </span>
+
                 </div>
               </div>
             )}
