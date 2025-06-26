@@ -7,6 +7,7 @@ export interface Product {
   sku: string;
   shelfId: string;
   stock: number;
+  imageUrl?: string;
 }
 
 export interface ProductOnShelf {
