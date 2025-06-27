@@ -1,5 +1,12 @@
+// src/App.tsx
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+
+import SignInAdmin from './components/auth/SignInAdmin';
+import SignInCustomer from './components/auth/SignInCustomer';
+import SignUpAdmin from './components/auth/SignUpAdmin';
+import SignUpCustomer from './components/auth/SignUpCustomer';
+
 import AdminLayout from './components/layouts/AdminLayout';
 import CustomerLayout from './components/layouts/CustomerLayout';
 
@@ -14,44 +21,43 @@ import Home from './pages/customer/Home';
 import MapNavigation from './pages/customer/MapNavigation';
 import ProductDetail from './pages/customer/ProductDetail';
 import SmartCart from './pages/customer/SmartCart';
-import { CartProvider } from './pages/customer/CartContext';  
-
-import SignInCustomer from './components/auth/SignInCustomer';
-import SignInAdmin from './components/auth/SignInAdmin';
+import { CartProvider } from './pages/customer/CartContext';
 
 function App() {
   return (
     <div className="min-h-screen bg-primary text-white">
-        <CartProvider>
-      <Routes>
-        {/* Start with admin dashboard */}
-        <Route path="/" element={<Navigate to="/admin" replace />} />
+      <CartProvider>
+        <Routes>
+          <Route path="/" element={<Navigate to="/admin" replace />} />
 
-        {/* Sign In Pages */}
-        <Route path="/signin/admin" element={<SignInAdmin />} />
-        <Route path="/signin/customer" element={<SignInCustomer />} />
+          {/* Sign In */}
+          <Route path="/signin/admin" element={<SignInAdmin />} />
+          <Route path="/signin/customer" element={<SignInCustomer />} />
 
-        {/* Admin Dashboard */}
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<Overview />} />
-          <Route path="floor-designer" element={<FloorPlanDesigner />} />
-          <Route path="products" element={<ProductLocationManager />} />
-          <Route path="discounts" element={<DiscountCreator />} />
-          <Route path="beacons" element={<BeaconManager />} />
-        </Route>
+          {/* Sign Up */}
+          <Route path="/signup/admin" element={<SignUpAdmin />} />
+          <Route path="/signup/customer" element={<SignUpCustomer />} />
 
-        {/* Customer Dashboard */}
-        <Route path="/customer" element={<CustomerLayout />}>
-          <Route index element={<Welcome />} />
-          <Route path="home" element={<Home />} />
-          <Route path="map" element={<MapNavigation />} />
-          <Route path="product/:id" element={<ProductDetail />} />
-          <Route path="cart" element={<SmartCart />} />
-        </Route>
+          {/* Admin Dashboard */}
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<Overview />} />
+            <Route path="floor-designer" element={<FloorPlanDesigner />} />
+            <Route path="products" element={<ProductLocationManager />} />
+            <Route path="discounts" element={<DiscountCreator />} />
+            <Route path="beacons" element={<BeaconManager />} />
+          </Route>
 
-        {/* Fallback */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+          {/* Customer Dashboard */}
+          <Route path="/customer" element={<CustomerLayout />}>
+            <Route index element={<Welcome />} />
+            <Route path="home" element={<Home />} />
+            <Route path="map" element={<MapNavigation />} />
+            <Route path="product/:id" element={<ProductDetail />} />
+            <Route path="cart" element={<SmartCart />} />
+          </Route>
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </CartProvider>
     </div>
   );

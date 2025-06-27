@@ -1,3 +1,4 @@
+// src/components/auth/SignInCustomer.tsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
@@ -11,7 +12,8 @@ const SignInCustomer: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    navigate(isAdmin ? '/dashboard' : '/customer');
+    // TODO: real auth here…
+    navigate(isAdmin ? '/admin' : '/customer');
   };
 
   const togglePasswordVisibility = () => {
@@ -21,11 +23,11 @@ const SignInCustomer: React.FC = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black to-gray-900 px-4 text-white">
       <GlassCard className="w-full max-w-md p-6 relative">
-        {/* Top Icon and Status */}
         <div className="flex items-center justify-between mb-6">
           <div className="w-12 h-12 rounded-full bg-cyan-500 bg-opacity-20 flex items-center justify-center mx-auto">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A4 4 0 017 17h10a4 4 0 011.879.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M5.121 17.804A4 4 0 017 17h10a4 4 0 011.879.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
           </div>
           <p className="absolute top-4 right-4 text-sm text-green-400">● System Online</p>
@@ -34,7 +36,6 @@ const SignInCustomer: React.FC = () => {
         <h2 className="text-2xl font-bold text-center mb-1">Welcome Back</h2>
         <p className="text-sm text-center text-gray-400 mb-4">Sign in to Smart Floor Manager</p>
 
-        {/* Toggle Admin/Customer */}
         <div className="flex justify-center gap-4 mb-6">
           <button
             onClick={() => setIsAdmin(true)}
@@ -97,16 +98,16 @@ const SignInCustomer: React.FC = () => {
           </Button>
         </form>
 
-        {/* <div className="my-6 text-center text-sm text-gray-500">
-          <span className="border-t border-gray-700 inline-block w-1/4 align-middle mr-2" />
-          OR CONTINUE WITH
-          <span className="border-t border-gray-700 inline-block w-1/4 align-middle ml-2" />
-        </div> */}
-
-        {/* <div className="flex gap-4">
-          <Button variant="glass" className="w-1/2">Google</Button>
-          <Button variant="glass" className="w-1/2">GitHub</Button>
-        </div> */}
+        <p className="text-center text-sm text-gray-400 mt-4">
+          Don’t have an account?{' '}
+          <button
+            type="button"
+            onClick={() => navigate(isAdmin ? '/signup/admin' : '/signup/customer')}
+            className="text-cyan-400 hover:underline"
+          >
+            Register
+          </button>
+        </p>
       </GlassCard>
     </div>
   );
