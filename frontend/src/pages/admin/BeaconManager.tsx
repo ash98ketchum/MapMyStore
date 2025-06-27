@@ -1,17 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import {
-  Plus, Radio, QrCode, Battery, AlertTriangle,
-  Play, Pause, QrCode as Qr, Link as LinkIcon,
-} from 'lucide-react';
+import { Plus, Radio, QrCode, Battery, AlertTriangle,
+         Play, Pause, X, Loader2, Link as LinkIcon } from 'lucide-react';
 
 import GlassCard from '../../components/ui/GlassCard';
 import Button    from '../../components/ui/Button';
 
 import { mockBeacons, mockShelves } from '../../data/mockData';
-import { Beacon } from '../../types';
+import { Beacon, Shelf } from '../../types';
 
-/* ─── tiny helpers ─────────────────────────────────────────────── */
+/* ─ helpers ────────────────────────────────────────────── */
 const statusColor = (s: Beacon['status']) =>
   s === 'online'  ? 'text-green-400 bg-green-500'
 : s === 'offline' ? 'text-red-400  bg-red-500'
@@ -23,55 +21,56 @@ const battColor = (n?: number) =>
 : n > 20    ? 'text-yellow-400'
 :             'text-red-400';
 
-/* ─── component ───────────────────────────────────────────────── */
+/* ─ component ─────────────────────────────────────────── */
 export default function BeaconManager() {
-  /* —— state ————————————————————————— */
+  /* ――― state ――― */
   const [beacons, setBeacons] = useState<Beacon[]>(() => {
     const saved = localStorage.getItem('beacons');
     return saved ? JSON.parse(saved) : mockBeacons;
   });
 
-  const [newDev,  setNewDev ]  = useState<BluetoothDevice | null>(null);
-  const [selShelf,setSelShelf] = useState<string>('');
-  const [showSim ,setShowSim]  = useState(false);
-  const [selBcn , setSelBcn ]  = useState<Beacon | null>(null);
+  const [scanModal, setScanModal]   = useState(false);
+  const [scanning , setScanning ]   = useState(false);
+  const [foundDevs, setFoundDevs]   = useState<BluetoothDevice[]>([]);
+  const scanRef = useRef<BluetoothLEScan | null>(null);
 
-  /* —— persistence ————————————————— */
+  const [assignDev , setAssignDev ] = useState<BluetoothDevice|null>(null);
+  const [assignShelf, setAssignShelf] = useState<string>('');
+
+  /* persist */
   useEffect(() => {
     localStorage.setItem('beacons', JSON.stringify(beacons));
   }, [beacons]);
 
-  /* —— BLE scan & add ————————————————— */
-  const scanForDevice = async () => {
+  /* ――― BLE scan handlers ――― */
+  const startScan = async () => {
+    if (scanning) return;
     try {
-      const dev = await navigator.bluetooth.requestDevice({
-        acceptAllDevices: true,         // ← correct flag
-        optionalServices: [],
+      setScanning(true);
+      const leScan = await navigator.bluetooth.requestLEScan({
+        acceptAllAdvertisements: true,
+        keepRepeatedDevices: false,
       });
-      setNewDev(dev);
+      scanRef.current = leScan;
+
+      navigator.bluetooth.addEventListener('advertisementreceived', ev => {
+        setFoundDevs(d => {
+          if (d.some(x => x.id === ev.device.id)) return d; // already listed
+          return [...d, ev.device];
+        });
+      });
     } catch (err) {
-      console.warn('[BLE-scan]', err);
+      console.warn('[BLE] scan error', err);
+      setScanning(false);
     }
   };
 
-  const addAsBeacon = () => {
-    if (!newDev || !selShelf) return;
-    setBeacons(b => [
-      ...b,
-      {
-        id: newDev.id,
-        name: newDev.name || 'BLE Device',
-        type: 'ble',
-        zoneId: selShelf,
-        status: 'online',
-        batteryLevel: undefined,
-      },
-    ]);
-    setNewDev(null);
-    setSelShelf('');
+  const stopScan = () => {
+    scanRef.current?.stop();
+    setScanning(false);
   };
 
-  /* —— enable / disable ——————————— */
+  /* ――― enable / disable ――― */
   const toggle = (id: string) =>
     setBeacons(b =>
       b.map(x =>
@@ -79,30 +78,43 @@ export default function BeaconManager() {
       ),
     );
 
-  /* —— simulate (“mock”) —————————— */
-  const markMock = (bk: Beacon) =>
-    setBeacons(b => b.map(x => (x.id === bk.id ? { ...x, status: 'mock' } : x)));
+  /* ――― save assignment ――― */
+  const saveAssignment = () => {
+    if (!assignDev || !assignShelf) return;
+    setBeacons(b => [
+      ...b,
+      {
+        id: assignDev.id,
+        name: assignDev.name || 'BLE Device',
+        type: 'ble',
+        zoneId: assignShelf,
+        status: 'online',
+        batteryLevel: undefined,
+      },
+    ]);
+    setAssignDev(null);
+    setAssignShelf('');
+    setScanModal(false);
+    stopScan();
+  };
 
-  /* ─── JSX ───────────────────────────────────────────────────── */
+  /* ――― JSX ――――――――――――――――――――――――――――――――――――――――――――――― */
   return (
     <div className="p-6 space-y-6">
-      {/* — header — */}
+      {/* header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold mb-2">QR / BLE Beacon Manager</h1>
           <p className="text-gray-400">Monitor and manage positioning beacons</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="secondary" icon={Plus} onClick={scanForDevice}>
+          <Button variant="secondary" icon={Plus} onClick={() => { setScanModal(true); startScan(); }}>
             Add Beacon
-          </Button>
-          <Button variant="primary" icon={Play} onClick={() => setShowSim(true)}>
-            Simulate Beacon
           </Button>
         </div>
       </div>
 
-      {/* — stats — */}
+      {/* stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
           ['Total', beacons.length, 'text-accent'],
@@ -117,7 +129,7 @@ export default function BeaconManager() {
         ))}
       </div>
 
-      {/* — beacon cards — */}
+      {/* beacon cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {beacons.map((b, i) => {
           const Icon = b.type === 'qr' ? QrCode : Radio;
@@ -176,18 +188,6 @@ export default function BeaconManager() {
                   >
                     {b.status === 'online' ? 'Disable' : 'Enable'}
                   </Button>
-
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => {
-                      setSelBcn(b);
-                      setShowSim(true);
-                    }}
-                    className="flex-1"
-                  >
-                    Simulate
-                  </Button>
                 </div>
 
                 {b.batteryLevel != null && b.batteryLevel < 20 && (
@@ -202,8 +202,74 @@ export default function BeaconManager() {
         })}
       </div>
 
-      {/* — modal: assign BLE device to shelf — */}
-      {newDev && (
+      {/* ───────── Add-Beacon modal ───────── */}
+      {scanModal && (
+        <motion.div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          <motion.div
+            className="bg-primary border border-glass rounded-xl p-6 w-full max-w-lg mx-4"
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">Nearby Bluetooth Devices</h2>
+              <Button size="icon" variant="secondary" onClick={() => { setScanModal(false); stopScan(); }}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+
+            <div className="h-64 overflow-y-auto space-y-2">
+              {foundDevs.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center text-gray-400">
+                  {scanning ? (
+                    <>
+                      <Loader2 className="animate-spin mb-4" />
+                      <p>Scanning… move your phone/tag close</p>
+                    </>
+                  ) : (
+                    <p>No devices found</p>
+                  )}
+                </div>
+              ) : (
+                foundDevs.map(d => (
+                  <div
+                    key={d.id}
+                    className="p-3 bg-glass rounded-lg hover:bg-white/10 cursor-pointer transition-colors flex items-center justify-between"
+                    onClick={() => { setAssignDev(d); setAssignShelf(''); }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Radio className="h-5 w-5 text-accent" />
+                      <div>
+                        <p className="font-medium">{d.name || '(no name)'}</p>
+                        <p className="text-xs text-gray-400 break-all">{d.id}</p>
+                      </div>
+                    </div>
+                    <LinkIcon className="h-4 w-4 text-gray-400" />
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              {scanning ? (
+                <Button variant="secondary" onClick={stopScan}>
+                  Stop Scan
+                </Button>
+              ) : (
+                <Button variant="primary" onClick={startScan}>
+                  Start Scan
+                </Button>
+              )}
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+
+      {/* ───────── Assign device → shelf modal ───────── */}
+      {assignDev && (
         <motion.div
           className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
           initial={{ opacity: 0 }}
@@ -211,19 +277,19 @@ export default function BeaconManager() {
         >
           <motion.div
             className="bg-primary border border-glass rounded-xl p-6 w-full max-w-sm mx-4"
-            initial={{ scale: 0.9, opacity: 0 }}
+            initial={{ scale: 0.92, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
           >
-            <h2 className="text-lg font-bold mb-4">Assign BLE Device</h2>
+            <h2 className="text-lg font-bold mb-4">Assign Shelf</h2>
 
             <p className="mb-4 text-gray-300">
-              Device:&nbsp;<span className="font-medium">{newDev.name || newDev.id}</span>
+              Device:&nbsp;<span className="font-medium">{assignDev.name || assignDev.id}</span>
             </p>
 
             <label className="block text-sm font-medium mb-1">Shelf</label>
             <select
-              value={selShelf}
-              onChange={e => setSelShelf(e.target.value)}
+              value={assignShelf}
+              onChange={e => setAssignShelf(e.target.value)}
               className="w-full mb-6 px-3 py-2 bg-glass rounded-lg border border-glass focus:border-accent"
             >
               <option value="">– choose –</option>
@@ -235,117 +301,17 @@ export default function BeaconManager() {
             </select>
 
             <div className="flex gap-3">
-              <Button variant="primary" className="flex-1" onClick={addAsBeacon}>
+              <Button variant="primary" className="flex-1" onClick={saveAssignment}>
                 Save
               </Button>
-              <Button variant="secondary" className="flex-1" onClick={() => setNewDev(null)}>
+              <Button
+                variant="secondary"
+                className="flex-1"
+                onClick={() => setAssignDev(null)}
+              >
                 Cancel
               </Button>
             </div>
-          </motion.div>
-        </motion.div>
-      )}
-
-      {/* — modal: simulate beacon (unchanged) — */}
-      {showSim && (
-        <motion.div
-          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-        >
-          <motion.div
-            className="bg-primary border border-glass rounded-xl p-6 w-full max-w-md mx-4"
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-          >
-            <h2 className="text-xl font-bold mb-4">Simulate Beacon</h2>
-
-            {selBcn ? (
-              <>
-                <div className="p-4 bg-glass rounded-lg mb-4">
-                  <div className="flex items-center gap-3">
-                    {selBcn.type === 'qr' ? (
-                      <Qr className="h-6 w-6 text-accent" />
-                    ) : (
-                      <Radio className="h-6 w-6 text-accent" />
-                    )}
-                    <div>
-                      <h3 className="font-semibold">{selBcn.name}</h3>
-                      <p className="text-sm text-gray-400">Shelf: {selBcn.zoneId}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <label className="block text-sm font-medium mb-2">
-                  Mock Proximity Radius (m)
-                </label>
-                <input
-                  defaultValue={5}
-                  type="number"
-                  className="w-full mb-4 px-3 py-2 bg-glass rounded-lg border border-glass focus:border-accent"
-                />
-
-                <label className="block text-sm font-medium mb-2">Duration</label>
-                <select className="w-full mb-6 px-3 py-2 bg-glass rounded-lg border border-glass focus:border-accent">
-                  <option value="5">5 min</option>
-                  <option value="15">15 min</option>
-                  <option value="30">30 min</option>
-                  <option value="60">1 hour</option>
-                </select>
-
-                <div className="flex gap-3">
-                  <Button
-                    variant="primary"
-                    className="flex-1"
-                    onClick={() => {
-                      markMock(selBcn);
-                      setShowSim(false);
-                      setSelBcn(null);
-                    }}
-                  >
-                    Start
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    className="flex-1"
-                    onClick={() => {
-                      setShowSim(false);
-                      setSelBcn(null);
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <>
-                <p className="text-gray-400 mb-4">Select a beacon to simulate:</p>
-                <div className="space-y-2 max-h-60 overflow-y-auto mb-6">
-                  {beacons.map(b => (
-                    <div
-                      key={b.id}
-                      className="p-3 bg-glass rounded-lg hover:bg-white/10 cursor-pointer transition-colors"
-                      onClick={() => setSelBcn(b)}
-                    >
-                      <div className="flex items-center gap-3">
-                        {b.type === 'qr' ? (
-                          <Qr className="h-5 w-5 text-accent" />
-                        ) : (
-                          <Radio className="h-5 w-5 text-accent" />
-                        )}
-                        <div>
-                          <p className="font-medium">{b.name}</p>
-                          <p className="text-sm text-gray-400">Shelf: {b.zoneId}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <Button variant="secondary" className="w-full" onClick={() => setShowSim(false)}>
-                  Close
-                </Button>
-              </>
-            )}
           </motion.div>
         </motion.div>
       )}
