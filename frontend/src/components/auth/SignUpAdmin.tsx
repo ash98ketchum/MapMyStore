@@ -1,6 +1,6 @@
-// src/pages/SignUpAdmin.tsx
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import axios from 'axios';
 import { Eye, EyeOff } from 'lucide-react';
 import GlassCard from '../ui/GlassCard';
 import Button from '../ui/Button';
@@ -9,21 +9,36 @@ const SignUpAdmin: React.FC = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const form = e.target as any;
-    const fullName = form.fullName.value;
-    const email = form.email.value;
-    const password = form.password.value;
+    // ← use FormData instead of e.target.whatever
+    const form = e.currentTarget;
+    const data = new FormData(form);
+    const fullName = data.get('fullName')?.toString() || '';
+    const email    = data.get('email')?.toString()    || '';
+    const password = data.get('password')?.toString() || '';
 
-    // Save to localStorage (simulate backend)
-    localStorage.setItem('adminName', fullName);
-    localStorage.setItem('adminEmail', email);
-    localStorage.setItem('adminPassword', password);
-
-    alert('Registration successful! Please sign in.');
-    navigate('/signin/admin');
+    try {
+      // ← point at your running backend on port 4000
+      await axios.post('http://localhost:4000/signup', {
+        fullName,
+        email,
+        password,
+        role: 'admin'
+      });
+      alert('Registration successful! Please sign in.');
+      navigate('/signin/admin');
+    } catch (err: any) {
+      console.error('Signup error →', err);
+      if (err.response) {
+        alert(err.response.data.error || `Signup failed (${err.response.status})`);
+      } else if (err.request) {
+        alert('No response from server — is it running on port 4000?');
+      } else {
+        alert('Signup failed: ' + err.message);
+      }
+    }
   };
 
   return (
@@ -76,7 +91,7 @@ const SignUpAdmin: React.FC = () => {
             />
             <button
               type="button"
-              onClick={() => setShowPassword(!showPassword)}
+              onClick={() => setShowPassword(prev => !prev)}
               className="absolute right-3 top-[36px] text-gray-400 hover:text-white"
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}

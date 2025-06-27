@@ -1,6 +1,6 @@
-// src/pages/SignUpCustomer.tsx
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import axios from 'axios';
 import { Eye, EyeOff } from 'lucide-react';
 import GlassCard from '../ui/GlassCard';
 import Button from '../ui/Button';
@@ -10,14 +10,36 @@ const SignUpCustomer: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
+    setShowPassword(prev => !prev);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // (you could save customer info here)
-    alert('Registration successful! Please sign in.');
-    navigate('/signin/customer');
+    const form = e.currentTarget;
+    const data = new FormData(form);
+    const fullName = data.get('fullName')?.toString() || '';
+    const email    = data.get('email')?.toString()    || '';
+    const password = data.get('password')?.toString() || '';
+
+    try {
+      await axios.post('http://localhost:4000/signup', {
+        fullName,
+        email,
+        password,
+        role: 'customer'
+      });
+      alert('Registration successful! Please sign in.');
+      navigate('/signin/customer');
+    } catch (err: any) {
+      console.error('Signup error →', err);
+      if (err.response) {
+        alert(err.response.data.error || `Signup failed (${err.response.status})`);
+      } else if (err.request) {
+        alert('No response from server — is it running on port 4000?');
+      } else {
+        alert('Signup failed: ' + err.message);
+      }
+    }
   };
 
   return (
