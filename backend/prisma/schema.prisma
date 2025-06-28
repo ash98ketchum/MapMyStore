@@ -20,5 +20,7 @@ model Customer {
   email     String   @unique
   password  String
   fullName  String
+  isActive  Boolean  @default(false) // ✅ ADD THIS LINE
   createdAt DateTime @default(now())
 }
+

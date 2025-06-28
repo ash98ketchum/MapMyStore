@@ -2,19 +2,19 @@
 
 require('dotenv').config();
 const express = require('express');
-const cors    = require('cors');
-const bcrypt  = require('bcryptjs');
-const jwt     = require('jsonwebtoken');
+const cors = require('cors');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const { PrismaClient } = require('@prisma/client');
-const fs      = require('fs/promises');
-const path    = require('path');
-const { z }   = require('zod');
+const fs = require('fs/promises');
+const path = require('path');
+const { z } = require('zod');
 
-const app        = express();
-const prisma     = new PrismaClient();
+const app = express();
+const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || 'change-this-in-prod';
-const DATA_DIR   = path.join(__dirname, 'data');
-const DATA_FILE  = path.join(DATA_DIR, 'currentLayout.json');
+const DATA_DIR = path.join(__dirname, 'data');
+const DATA_FILE = path.join(DATA_DIR, 'currentLayout.json');
 
 app.use(cors());
 app.use(express.json({ limit: '2mb' }));
@@ -38,60 +38,59 @@ async function writeLayout(layout) {
 /** Zod schemas for layout validation **/
 const productOnShelf = z.object({
   productId: z.string().min(1),
-  qty:       z.number().int().positive(),
+  qty: z.number().int().positive(),
 });
 const shelfSchema = z.object({
-  id:        z.string(),
-  label:     z.string(),
-  type:      z.enum(['aisle', 'endcap', 'island', 'checkout']),
-  x:         z.number(),
-  y:         z.number(),
-  width:     z.number(),
-  height:    z.number(),
-  zone:      z.string(),
-  capacity:  z.number(),
-  products:  z.array(productOnShelf),
+  id: z.string(),
+  label: z.string(),
+  type: z.enum(['aisle', 'endcap', 'island', 'checkout']),
+  x: z.number(),
+  y: z.number(),
+  width: z.number(),
+  height: z.number(),
+  zone: z.string(),
+  capacity: z.number(),
+  products: z.array(productOnShelf),
 });
 const zoneSchema = z.object({
-  id:     z.string(),
-  name:   z.string(),
-  x:      z.number(),
-  y:      z.number(),
-  width:  z.number(),
+  id: z.string(),
+  name: z.string(),
+  x: z.number(),
+  y: z.number(),
+  width: z.number(),
   height: z.number(),
-  color:  z.string(),
+  color: z.string(),
 });
 const roadSchema = z.object({
-  id:     z.string(),
-  x:      z.number(),
-  y:      z.number(),
-  width:  z.number(),
+  id: z.string(),
+  x: z.number(),
+  y: z.number(),
+  width: z.number(),
   height: z.number(),
 });
 const layoutSchema = z.object({
-  name:      z.string().min(1),
+  name: z.string().min(1),
   createdAt: z.number().int(),
-  scale:     z.number(),
-  offset:    z.object({ x: z.number(), y: z.number() }),
-  shelves:   z.array(shelfSchema),
-  zones:     z.array(zoneSchema),
-  roads:     z.array(roadSchema),
+  scale: z.number(),
+  offset: z.object({ x: z.number(), y: z.number() }),
+  shelves: z.array(shelfSchema),
+  zones: z.array(zoneSchema),
+  roads: z.array(roadSchema),
 });
 
 /** AUTH — Sign Up **/
 app.post('/signup', async (req, res) => {
   const { fullName, email, password, role } = req.body;
-  if (!fullName || !email || !password || !['admin','customer'].includes(role)) {
+  if (!fullName || !email || !password || !['admin', 'customer'].includes(role)) {
     return res.status(400).json({ error: 'fullName, email, password and valid role required' });
   }
 
   try {
     const hashed = await bcrypt.hash(password, 10);
-    const user = (role === 'admin')
+    const user = role === 'admin'
       ? await prisma.admin.create({ data: { fullName, email, password: hashed } })
       : await prisma.customer.create({ data: { fullName, email, password: hashed } });
     res.status(201).json({ id: user.id, email: user.email });
-  
   } catch (err) {
     if (err.code === 'P2002') {
       return res.status(409).json({ error: 'Email already in use' });
@@ -101,6 +100,20 @@ app.post('/signup', async (req, res) => {
   }
 });
 
+
+/** TOTAL CUSTOMERS COUNT **/
+app.get('/api/customers/count', async (req, res) => {
+  try {
+    const total = await prisma.customer.count(); // ❌ removed isActive
+    res.json({ total });
+  } catch (error) {
+    console.error('Error fetching customer count:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+
+/** AUTH — Sign In **/
 /** AUTH — Sign In **/
 app.post('/signin', async (req, res) => {
   const { email, password, role } = req.body;
@@ -116,6 +129,14 @@ app.post('/signin', async (req, res) => {
     const ok = await bcrypt.compare(password, user.password);
     if (!ok) return res.status(401).json({ error: 'Invalid credentials' });
 
+    // ✅ Set isActive = true if customer logs in
+    if (role === 'customer') {
+      await prisma.customer.update({
+        where: { email },
+        data: { isActive: true }
+      });
+    }
+
     const token = jwt.sign({ userId: user.id, role }, JWT_SECRET, { expiresIn: '4h' });
     res.json({ token, fullName: user.fullName, email: user.email });
 
@@ -124,6 +145,7 @@ app.post('/signin', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
+
 
 /** HEALTH-CHECK **/
 app.get('/api/health', (_req, res) => {
