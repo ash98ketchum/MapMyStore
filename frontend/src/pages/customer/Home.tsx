@@ -213,7 +213,17 @@ const Home: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 + index * 0.1 }}
               >
-                <Link to={`/customer/product/${product.id}`}>
+                                  <Link
+                    to={`/customer/product/${product.id}`}
+                    onClick={() => {
+                      fetch('http://localhost:4000/api/search', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ product: product.name })
+                      });
+                    }}
+                  >
+
                   <GlassCard className="p-4 hover:bg-white hover:bg-opacity-10 transition-all">
                     <div className="aspect-square bg-glass rounded-lg mb-3 overflow-hidden">
                       {product.imageUrl ? (

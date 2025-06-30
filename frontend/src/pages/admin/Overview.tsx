@@ -9,12 +9,29 @@ import { mockAnalytics, mockEvents } from '../../data/mockData';
 const Overview = () => {
   const navigate = useNavigate();
   const [customerCount, setCustomerCount] = useState(0);
+  const [topSearches, setTopSearches] = useState<string[]>([]);
 
   const handleLogout = () => {
     localStorage.setItem("role", "customer");
     localStorage.removeItem("loggedIn");
     navigate("/signin/customer");
   };
+// --------------------top search-------------------------------------------------
+useEffect(() => {
+  const fetchTopSearches = async () => {
+    try {
+      const res = await fetch("http://localhost:4000/api/search/top?" + new Date().getTime()); // prevent caching
+      const data = await res.json();
+      console.log("[Top Search Data]", data);
+      setTopSearches(data.topSearches || []);
+    } catch (err) {
+      console.error("Failed to load top searches:", err);
+    }
+  };
+
+  fetchTopSearches();
+}, []);
+
 
   // Fetch live active users from backend
 useEffect(() => {
@@ -57,20 +74,21 @@ useEffect(() => {
           </div>
         </GlassCard>
 
-        <GlassCard className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-400 text-sm mb-1">Top Search</p>
-              <p className="text-2xl font-bold">{mockAnalytics.topSearches[0]}</p>
-              <p className="text-sm text-gray-400 mt-2">
-                {mockAnalytics.topSearches.slice(1, 3).join(', ')}
-              </p>
-            </div>
-            <div className="h-12 w-12 bg-highlight bg-opacity-20 rounded-xl flex items-center justify-center">
-              <Zap className="h-6 w-6 text-highlight" />
-            </div>
-          </div>
-        </GlassCard>
+           <GlassCard className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-400 text-sm mb-1">Top Search</p>
+                  <p className="text-2xl font-bold">
+                    {topSearches.length > 0 ? topSearches[0] : "N/A"}
+                  </p>
+                </div>
+                <div className="h-12 w-12 bg-highlight bg-opacity-20 rounded-xl flex items-center justify-center">
+                  <Zap className="h-6 w-6 text-highlight" />
+                </div>
+              </div>
+            </GlassCard>
+
+
 
         <GlassCard className="p-6">
           <div className="flex items-center justify-between">
