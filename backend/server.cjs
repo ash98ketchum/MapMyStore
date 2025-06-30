@@ -6,7 +6,8 @@ const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { PrismaClient } = require('@prisma/client');
-const fs = require('fs/promises');
+const fs = require('fs');
+const fsp = require('fs/promises'); // alias for promise-based operations
 const path = require('path');
 const { z } = require('zod');
 
@@ -15,6 +16,7 @@ const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || 'change-this-in-prod';
 const DATA_DIR = path.join(__dirname, 'data');
 const DATA_FILE = path.join(DATA_DIR, 'currentLayout.json');
+
 
 app.use(cors());
 app.use(express.json({ limit: '2mb' }));
@@ -76,6 +78,51 @@ const layoutSchema = z.object({
   shelves: z.array(shelfSchema),
   zones: z.array(zoneSchema),
   roads: z.array(roadSchema),
+});
+// ------------------------top search------------------------------
+const searchFilePath = path.join(__dirname, 'data', 'searchCounts.json');
+// Initialize file if not exists
+(async () => {
+  try {
+    await fsp.mkdir(DATA_DIR, { recursive: true });
+    await fsp.access(searchFilePath);
+  } catch {
+    await fsp.writeFile(searchFilePath, JSON.stringify({}), 'utf8');
+  }
+})();
+
+app.post('/api/search', async (req, res) => {
+  const { product } = req.body;
+  if (!product) return res.status(400).json({ error: 'Product is required' });
+
+  try {
+    const content = await fsp.readFile(searchFilePath, 'utf-8');
+    const data = JSON.parse(content);
+    data[product] = (data[product] || 0) + 1;
+
+    await fsp.writeFile(searchFilePath, JSON.stringify(data, null, 2), 'utf8');
+    res.status(200).json({ message: 'Search recorded' });
+  } catch (err) {
+    console.error('[search]', err);
+    res.status(500).json({ error: 'Failed to record search' });
+  }
+});
+
+app.get('/api/search/top', async (req, res) => {
+  try {
+    const content = await fsp.readFile(searchFilePath, 'utf-8');
+    const data = JSON.parse(content);
+
+    const topSearches = Object.entries(data)
+      .sort(([, a], [, b]) => b - a)
+      .map(([product]) => product)
+      .slice(0, 5);
+
+    res.json({ topSearches });
+  } catch (err) {
+    console.error('[top-searches]', err);
+    res.status(500).json({ error: 'Failed to load top searches' });
+  }
 });
 
 /** AUTH — Sign Up **/
