@@ -52,15 +52,16 @@ export interface Path {
   color: string;
 }
 
-export interface Beacon {
-  id: string;
-  name: string;
-  type: 'qr' | 'ble';
-  zoneId: string;
-  status: 'online' | 'offline' | 'mock';
-  batteryLevel?: number;
-  lastSeen?: Date;
-}
+export type Beacon = {
+   id: string;
+   name: string;
+   type: 'qr' | 'ble';
+   zoneId: string;
+   status: 'online' | 'offline' | 'mock';
+   batteryLevel?: number;
+   x: number;
+   y: number; 
+ };
 
 export interface DiscountRule {
   id: string;

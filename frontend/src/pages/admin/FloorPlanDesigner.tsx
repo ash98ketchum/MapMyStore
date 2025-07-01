@@ -1,15 +1,15 @@
 // -----------------------------------------------------------------------------
 // Floor-plan Designer
-// – Blueprint grid, smooth pan/zoom
-// – ONE persisted layout (PUT /api/layout, GET /api/layout)
+// – Blueprint grid with pan / zoom
+// – ONE persisted layout  (PUT /api/layout, GET /api/layout)
 // – Per-type auto-increment labels (Aisle 1, End Cap 1 …)
-// – Shelf side-panel: add / edit products (+ quantity) with live search
+// – Each shelf’s `zone` is kept in-sync automatically
 // -----------------------------------------------------------------------------
 
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { nanoid } from 'nanoid';
 import DraggableBox from '../../components/floorplan/DraggableBox';
-import Button from '../../components/ui/Button';
+import Button       from '../../components/ui/Button';
 import {
   ChevronLeft, ChevronRight, ChevronUp, ChevronDown,
   Trash, Link2, X,
@@ -21,10 +21,12 @@ import {
   mockShelves, mockZones, mockProducts,
 } from '../../data/mockData';
 
-/* ─── visual constants ─── */
-const PAVER   = 32;
-const P_FILL  = '#b4b8bd';
-const P_EDGE  = '#2f2f2f';
+/* ──────────────────────────────────────────────────────────
+ *  Visual constants
+ * ────────────────────────────────────────────────────────── */
+const PAVER   = 32;            // size of a single “road” tile
+const P_FILL  = '#b4b8bd';     // road fill
+const P_EDGE  = '#2f2f2f';     // road stroke
 
 const shelfDefs: Record<ShelfType, { name: string; color: string }> = {
   aisle:    { name: 'Aisle',    color: '#00D3FF' },
@@ -41,9 +43,24 @@ const zonePalette = [
   { name: 'Health & Beauty', color: '#EF4444' },
 ];
 
-/* ─── tiny helpers ─── */
-type ShelfProduct = { productId: string; qty: number };
+/* ──────────────────────────────────────────────────────────
+ *  Helpers
+ * ────────────────────────────────────────────────────────── */
 
+/** Return the zone-id whose rectangle contains the centre of (x,y,w,h). */
+function zoneForRect(
+  x: number, y: number, w: number, h: number, zones: Zone[],
+): string {
+  const cx = x + w / 2;
+  const cy = y + h / 2;
+  const z  = zones.find(q =>
+    cx >= q.x && cx <= q.x + q.width &&
+    cy >= q.y && cy <= q.y + q.height,
+  );
+  return z ? z.id : 'unassigned';
+}
+
+/** DFS to gather an entire connected path of road tiles. */
 function collectRoad(start: string, list: Road[]): string[] {
   const map = new Map(list.map(p => [p.id, p]));
   const out = new Set<string>();
@@ -65,7 +82,9 @@ function collectRoad(start: string, list: Road[]): string[] {
   return [...out];
 }
 
-/* ─── component ─── */
+/* ──────────────────────────────────────────────────────────
+ *  Component
+ * ────────────────────────────────────────────────────────── */
 export default function FloorPlanDesigner() {
   /* shelves, zones, roads */
   const [shelves, setShelves] = useState<Shelf[]>(mockShelves);
@@ -76,10 +95,9 @@ export default function FloorPlanDesigner() {
   const shelfCounters = useRef<Record<ShelfType, number>>({
     aisle: 1, endcap: 1, island: 1, checkout: 1,
   });
-  /* initialise counters from existing mock data once */
   useEffect(() => {
     const c = { ...shelfCounters.current };
-    shelves.forEach(s => (c[s.type] = Math.max(c[s.type], c[s.type] + 1)));
+    shelves.forEach(s => { c[s.type] = Math.max(c[s.type], c[s.type] + 1); });
     shelfCounters.current = c;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // run once
@@ -100,7 +118,7 @@ export default function FloorPlanDesigner() {
   const panStart = useRef({ x: 0, y: 0 });
   const canvasRef = useRef<HTMLDivElement>(null);
 
-  /* ─── block browser’s ctrl+wheel zoom ─── */
+  /* ─── block browser ctrl+wheel zoom ─── */
   useEffect(() => {
     const stop = (e: WheelEvent) => { if (e.ctrlKey) e.preventDefault(); };
     window.addEventListener('wheel', stop, { passive: false });
@@ -110,7 +128,7 @@ export default function FloorPlanDesigner() {
   /* ─── LOAD saved layout on mount ─── */
   useEffect(() => {
     fetch('/api/layout')
-      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(r => (r.ok ? r.json() : Promise.reject()))
       .then(l => {
         setScale(l.scale);
         setOffset(l.offset);
@@ -121,82 +139,60 @@ export default function FloorPlanDesigner() {
       .catch(() => {/* no saved layout yet */});
   }, []);
 
-  /* ─── wheel-zoom ─── */
-  const onWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    const factor = 1 - e.deltaY / 600;
-    const next   = Math.min(3, Math.max(0.4, scale * factor));
-    if (next === scale) return;
-    const rect = canvasRef.current!.getBoundingClientRect();
-    const px = e.clientX - rect.left - offset.x;
-    const py = e.clientY - rect.top  - offset.y;
-    const z  = next / scale;
-    setOffset({ x: offset.x + px - px*z, y: offset.y + py - py*z });
-    setScale(next);
-  };
+  /* ────────────────────────────────────────────────────────
+   *  Create helpers
+   * ──────────────────────────────────────────────────────── */
 
-  /* ─── panning ─── */
-  const startPan = (e: React.MouseEvent) => {
-    if ((e.target as HTMLElement).closest('[data-draggable="true"]')) return;
-    if (e.button !== 0) return;
-    e.preventDefault();
-    setPanning(true);
-    panStart.current = { x: e.clientX - offset.x, y: e.clientY - offset.y };
-    document.body.style.cursor = 'grabbing';
-  };
-  const doPan  = (e: React.MouseEvent) =>
-    panning && setOffset({ x: e.clientX - panStart.current.x, y: e.clientY - panStart.current.y });
-  const endPan = () => { setPanning(false); document.body.style.cursor = 'default'; };
-
-  /* ─── create helpers ─── */
   const addShelf = (t: ShelfType) =>
     setShelves(a => {
       const label = `${shelfDefs[t].name} ${shelfCounters.current[t]++}`;
+      const x = 80, y = 80, w = 120, h = 40;
       return [...a, {
         id:nanoid(), type:t, label,
-        x:80, y:80, width:120, height:40,
-        zone:'unassigned', capacity:50, products: [] as ShelfProduct[],
+        x, y, width:w, height:h,
+        zone: zoneForRect(x, y, w, h, zones),     // ← auto-assign
+        capacity:50, products: [],
       }];
     });
-const addZone = (name: string, color: string) =>
-  setZones(a => [...a, {
-    id: `zone-${nanoid()}`, name, color,
-    x: 100, y: 100, width: 180, height: 140,
-  }]);
 
-  /* ─── first road tile ─── */
-  const placeRoadStart = (e: React.MouseEvent) => {
-    if (!placingRoad || !canvasRef.current) return;
-    const rect = canvasRef.current.getBoundingClientRect();
-    const wx = (e.clientX - rect.left - offset.x) / scale;
-    const wy = (e.clientY - rect.top  - offset.y) / scale;
-    const r:Road = { id:nanoid(), x:wx-PAVER/2, y:wy-PAVER/2, width:PAVER, height:PAVER };
-    setRoads(a => [...a,r]);
-    setSelRoadId(r.id); setRoadGroup([]);
-    setPlacingRoad(false);
-    setSelShelf(null); setSelZoneId(null);
+  const addZone = (name: string, color: string) =>
+    setZones(a => {
+      const z = {
+        id: `zone-${nanoid()}`, name, color,
+        x: 100, y: 100, width: 180, height: 140,
+      };
+
+      /* re-label any shelves whose centres fall into the new zone */
+      setShelves(s =>
+        s.map(sh =>
+          zoneForRect(sh.x, sh.y, sh.width, sh.height, [...a, z]) !== sh.zone
+            ? { ...sh, zone: z.id }
+            : sh,
+        ),
+      );
+      return [...a, z];
+    });
+
+  /* ────────────────────────────────────────────────────────
+   *  Update helpers
+   * ──────────────────────────────────────────────────────── */
+
+  const updShelf = (s: Shelf) => setShelves(a => a.map(t => (t.id === s.id ? s : t)));
+  const updZone  = (z: Zone)  => setZones  (a => a.map(t => (t.id === z.id ? z : t)));
+  const updRoad  = (r: Road)  => setRoads  (a => a.map(t => (t.id === r.id ? r : t)));
+
+  /* When a shelf is dragged/resized, recalc its zone. */
+  const onShelfChange = (
+    orig: Shelf,
+    nx: number, ny: number, nw: number, nh: number,
+  ) => {
+    const zid = zoneForRect(nx, ny, nw, nh, zones);
+    updShelf({ ...orig, x: nx, y: ny, width: nw, height: nh, zone: zid });
   };
 
-  /* ─── extend road ─── */
-  const extendRoad = (dir:'left'|'right'|'up'|'down') => {
-    if (!selRoadId) return;
-    const base = roads.find(r => r.id===selRoadId)!;
-    const r:Road = {
-      id:nanoid(),
-      x: dir==='left'? base.x-PAVER : dir==='right'? base.x+PAVER : base.x,
-      y: dir==='up'?   base.y-PAVER : dir==='down'?  base.y+PAVER : base.y,
-      width:PAVER, height:PAVER,
-    };
-    setRoads(a => [...a,r]);
-    setSelRoadId(r.id); setRoadGroup([]);
-  };
-
-  /* ─── update helpers ─── */
-  const updShelf = (s:Shelf)  => setShelves(a => a.map(t => t.id===s.id? s:t));
-  const updZone  = (z:Zone)   => setZones  (a => a.map(t => t.id===z.id? z:t));
-  const updRoad  = (r:Road)   => setRoads  (a => a.map(t => t.id===r.id? r:t));
-
-  /* ─── delete helpers ─── */
+  /* ────────────────────────────────────────────────────────
+   *  Delete / clear selection helpers (unchanged)
+   * ──────────────────────────────────────────────────────── */
   const deleteSel = () => {
     if (selShelf)          { setShelves(shelves.filter(s => s.id!==selShelf.id)); setSelShelf(null); }
     else if (selZoneId)    { setZones  (zones.filter(z  => z.id!==selZoneId));    setSelZoneId(null);}
@@ -214,17 +210,81 @@ const addZone = (name: string, color: string) =>
     if (keep!=='road')  { setSelRoadId(null); setRoadGroup([]); }
   };
 
-  /* ─── SAVE layout (PUT /api/layout) ─── */
+  /* ────────────────────────────────────────────────────────
+   *  Pan / zoom handlers (unchanged)
+   * ──────────────────────────────────────────────────────── */
+  const onWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    const factor = 1 - e.deltaY / 600;
+    const next   = Math.min(3, Math.max(0.4, scale * factor));
+    if (next === scale) return;
+    const rect = canvasRef.current!.getBoundingClientRect();
+    const px = e.clientX - rect.left - offset.x;
+    const py = e.clientY - rect.top  - offset.y;
+    const z  = next / scale;
+    setOffset({ x: offset.x + px - px*z, y: offset.y + py - py*z });
+    setScale(next);
+  };
+  const startPan = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest('[data-draggable="true"]')) return;
+    if (e.button !== 0) return;
+    e.preventDefault();
+    setPanning(true);
+    panStart.current = { x: e.clientX - offset.x, y: e.clientY - offset.y };
+    document.body.style.cursor = 'grabbing';
+  };
+  const doPan  = (e: React.MouseEvent) =>
+    panning && setOffset({ x: e.clientX - panStart.current.x, y: e.clientY - panStart.current.y });
+  const endPan = () => { setPanning(false); document.body.style.cursor = 'default'; };
+
+  /* ────────────────────────────────────────────────────────
+   *  Road placement helpers (unchanged)
+   * ──────────────────────────────────────────────────────── */
+  const placeRoadStart = (e: React.MouseEvent) => {
+    if (!placingRoad || !canvasRef.current) return;
+    const rect = canvasRef.current.getBoundingClientRect();
+    const wx = (e.clientX - rect.left - offset.x) / scale;
+    const wy = (e.clientY - rect.top  - offset.y) / scale;
+    const r:Road = { id:nanoid(), x:wx-PAVER/2, y:wy-PAVER/2, width:PAVER, height:PAVER };
+    setRoads(a => [...a,r]);
+    setSelRoadId(r.id); setRoadGroup([]);
+    setPlacingRoad(false);
+    setSelShelf(null); setSelZoneId(null);
+  };
+  const extendRoad = (dir:'left'|'right'|'up'|'down') => {
+    if (!selRoadId) return;
+    const base = roads.find(r => r.id===selRoadId)!;
+    const r:Road = {
+      id:nanoid(),
+      x: dir==='left'? base.x-PAVER : dir==='right'? base.x+PAVER : base.x,
+      y: dir==='up'?   base.y-PAVER : dir==='down'?  base.y+PAVER : base.y,
+      width:PAVER, height:PAVER,
+    };
+    setRoads(a => [...a,r]);
+    setSelRoadId(r.id); setRoadGroup([]);
+  };
+
+  /* ────────────────────────────────────────────────────────
+   *  SAVE layout (PUT /api/layout)
+   * ──────────────────────────────────────────────────────── */
   const handleSaveLayout = async () => {
+    /* final sweep – ensure every shelf’s zone field is correct */
+    const fixedShelves = shelves.map(s => ({
+      ...s,
+      zone: zoneForRect(s.x, s.y, s.width, s.height, zones),
+    }));
+    setShelves(fixedShelves);
+
     const payload = {
       name      : 'Current Layout',
       createdAt : Date.now(),
       scale,
       offset,
-      shelves,
+      shelves   : fixedShelves,
       zones,
       roads,
     };
+
     try {
       const res = await fetch('/api/layout', {
         method : 'PUT',
@@ -238,7 +298,9 @@ const addZone = (name: string, color: string) =>
     }
   };
 
-  /* ─── Shelf side-panel: search & add products ─── */
+  /* ────────────────────────────────────────────────────────
+   *  Shelf side-panel state (unchanged)
+   * ──────────────────────────────────────────────────────── */
   const [query, setQuery] = useState('');
   const suggestions = useMemo(() => (
     query.trim()
@@ -250,64 +312,78 @@ const addZone = (name: string, color: string) =>
   const addProdToShelf = (prodId: string) => {
     if (!selShelf) return;
     const target = shelves.find(s => s.id === selShelf.id)!;
-    const existing = (target.products as ShelfProduct[])
-      .find(p => p.productId === prodId);
-    let newProds: ShelfProduct[];
+    const existing = target.products.find(p => p.productId === prodId);
+    let newProds;
     if (existing) {
-      newProds = (target.products as ShelfProduct[])
-        .map(p => p.productId === prodId ? { ...p, qty: p.qty + 1 } : p);
+      newProds = target.products.map(p =>
+        p.productId === prodId ? { ...p, qty: p.qty + 1 } : p,
+      );
     } else {
-      newProds = [...(target.products as ShelfProduct[]), { productId: prodId, qty: 1 }];
+      newProds = [...target.products, { productId: prodId, qty: 1 }];
     }
     updShelf({ ...target, products: newProds });
-    /* refresh side-panel state */
     setSelShelf({ ...target, products: newProds });
     setQuery('');
   };
-
   const setQty = (prodId:string, qty:number) => {
     if (!selShelf) return;
-    const newProds = (selShelf.products as ShelfProduct[])
-      .map(p => p.productId === prodId ? { ...p, qty } : p);
+    const newProds = selShelf.products.map(p =>
+      p.productId === prodId ? { ...p, qty } : p,
+    );
     updShelf({ ...selShelf, products: newProds });
     setSelShelf({ ...selShelf, products: newProds });
   };
-
   const delProd = (prodId:string) => {
     if (!selShelf) return;
-    const newProds = (selShelf.products as ShelfProduct[])
-      .filter(p => p.productId !== prodId);
+    const newProds = selShelf.products.filter(p => p.productId !== prodId);
     updShelf({ ...selShelf, products: newProds });
     setSelShelf({ ...selShelf, products: newProds });
   };
 
-  /* ─── JSX ─── */
+  /* ────────────────────────────────────────────────────────
+   *  JSX
+   * ──────────────────────────────────────────────────────── */
   return (
     <div className="h-full flex overflow-hidden select-none">
-      {/* ── Palette ── */}
+      {/* ───────────────── Sidebar / Palette ───────────────── */}
       <aside className="w-64 bg-glass p-4 space-y-3 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700">
         <h2 className="font-bold">Palette</h2>
+
         {Object.keys(shelfDefs).map(t => (
-          <Button key={t} className="bg-sky-500 hover:bg-sky-600 text-white font-bold w-full p-2 rounded"onClick={() => addShelf(t as ShelfType)}>
+          <Button
+            key={t}
+            className="bg-sky-500 hover:bg-sky-600 text-white font-bold w-full p-2 rounded"
+            onClick={() => addShelf(t as ShelfType)}
+          >
             + {shelfDefs[t as ShelfType].name}
           </Button>
         ))}
+
         <h3 className="font-semibold mt-2">Sections</h3>
         {zonePalette.map(z => (
-          <Button key={z.name} variant="secondary" className="w-full"
-                  onClick={() => addZone(z.name, z.color)}>
+          <Button
+            key={z.name}
+            variant="secondary"
+            className="w-full"
+            onClick={() => addZone(z.name, z.color)}
+          >
             + {z.name}
           </Button>
         ))}
-        <Button variant={placingRoad ? 'primary' : 'secondary'} className="w-full mt-3"
-                onClick={() => { setPlacingRoad(!placingRoad); clearSel('none'); }}>
+
+        <Button
+          variant={placingRoad ? 'primary' : 'secondary'}
+          className="w-full mt-3"
+          onClick={() => { setPlacingRoad(!placingRoad); clearSel('none'); }}
+        >
           {placingRoad ? 'Cancel Path' : 'Add Path'}
         </Button>
+
         <Button variant="primary" className="w-full" onClick={handleSaveLayout}>
           Save Layout
         </Button>
 
-        {/* D-pad & link */}
+        {/* D-pad & link for road extension */}
         {selRoadId && (
           <div className="grid grid-cols-3 gap-0.5 w-max mx-auto mt-3">
             <div />
@@ -330,15 +406,17 @@ const addZone = (name: string, color: string) =>
         )}
 
         {(selShelf || selZoneId || selRoadId) && (
-          <Button className="w-full mt-3 flex items-center justify-center gap-2
-                             bg-red-600 hover:bg-red-700 text-white"
-                  onClick={deleteSel}>
+          <Button
+            className="w-full mt-3 flex items-center justify-center gap-2
+                       bg-red-600 hover:bg-red-700 text-white"
+            onClick={deleteSel}
+          >
             <Trash size={16}/> Delete
           </Button>
         )}
       </aside>
 
-      {/* ── Canvas wrapper ── */}
+      {/* ───────────────── Canvas wrapper ───────────────── */}
       <div
         className="flex-1 relative overflow-hidden bg-[#0C1C33]"
         onWheel={onWheel}
@@ -369,7 +447,7 @@ const addZone = (name: string, color: string) =>
           }}
         />
 
-        {/* pan/zoom surface */}
+        {/* pan / zoom surface */}
         <div
           ref={canvasRef}
           className="relative w-full h-full overflow-visible z-10"
@@ -380,58 +458,78 @@ const addZone = (name: string, color: string) =>
             transition: 'transform 80ms ease-out',
           }}
         >
-          {/* zones */}
+          {/* ──────────── zones ──────────── */}
           {zones.map(z => (
-            <DraggableBox key={z.id} id={z.id} scale={scale} data-draggable="true"
+            <DraggableBox
+              key={z.id}
+              id={z.id}
+              scale={scale}
+              data-draggable="true"
               x={z.x} y={z.y} w={z.width} h={z.height}
-              selected={selZoneId===z.id}
+              selected={selZoneId === z.id}
               onSelect={() => { setSelZoneId(z.id); clearSel('zone'); }}
-              onChange={(id,nx,ny,nw,nh)=>updZone({ ...z,x:nx,y:ny,width:nw,height:nh })}
+              onChange={(id, nx, ny, nw, nh) =>
+                updZone({ ...z, x: nx, y: ny, width: nw, height: nh })
+              }
               style={{
-              background: `${z.color}33`,
-              border: `2px dashed ${selZoneId === z.id ? '#38bdf8' : z.color}`,
-              zIndex: 10,
-            }}>
-              <div className="absolute inset-0 flex items-center justify-center text-xs font-semibold pointer-events-none"
-                   style={{ color: selZoneId===z.id? '#38bdf8': z.color }}>
+                background: `${z.color}33`,
+                border: `2px dashed ${selZoneId === z.id ? '#38bdf8' : z.color}`,
+                zIndex: 10,
+              }}
+            >
+              <div
+                className="absolute inset-0 flex items-center justify-center text-xs font-semibold pointer-events-none"
+                style={{ color: selZoneId === z.id ? '#38bdf8' : z.color }}
+              >
                 {z.name}
               </div>
             </DraggableBox>
           ))}
 
-          {/* shelves */}
+          {/* ──────────── shelves ──────────── */}
           {shelves.map(s => (
-            <DraggableBox key={s.id} id={s.id} scale={scale} data-draggable="true"
+            <DraggableBox
+              key={s.id}
+              id={s.id}
+              scale={scale}
+              data-draggable="true"
               x={s.x} y={s.y} w={s.width} h={s.height}
-              selected={selShelf?.id===s.id}
-              onSelect={()=>{ setSelShelf(s); clearSel('shelf'); }}
-              onChange={(id,nx,ny,nw,nh)=>updShelf({ ...s,x:nx,y:ny,width:nw,height:nh })}
+              selected={selShelf?.id === s.id}
+              onSelect={() => { setSelShelf(s); clearSel('shelf'); }}
+              onChange={(id, nx, ny, nw, nh) => onShelfChange(s, nx, ny, nw, nh)}
               style={{
-              background: `linear-gradient(135deg, ${shelfDefs[s.type].color} 0%, #ffffff33 100%)`,
-              zIndex: 20,
-            }}
->
+                background: `linear-gradient(135deg, ${shelfDefs[s.type].color} 0%, #ffffff33 100%)`,
+                zIndex: 20,
+              }}
+            >
               <div className="absolute inset-0 flex items-center justify-center text-white/90 text-xs font-bold pointer-events-none">
                 {s.label}
               </div>
             </DraggableBox>
           ))}
 
-          {/* roads */}
+          {/* ──────────── roads ──────────── */}
           {roads.map(r => {
-            const sel = selRoadId===r.id || roadGroup.includes(r.id);
+            const sel = selRoadId === r.id || roadGroup.includes(r.id);
             return (
-              <DraggableBox key={r.id} id={r.id} scale={scale} data-draggable="true"
+              <DraggableBox
+                key={r.id}
+                id={r.id}
+                scale={scale}
+                data-draggable="true"
                 x={r.x} y={r.y} w={r.width} h={r.height}
                 selected={sel}
-                onSelect={()=>{ setSelRoadId(r.id); setRoadGroup([]); clearSel('road'); }}
-                onChange={(id,nx,ny)=>(
-                  roadGroup.length>1
+                onSelect={() => { setSelRoadId(r.id); setRoadGroup([]); clearSel('road'); }}
+                onChange={(id, nx, ny) => (
+                  roadGroup.length > 1
                     ? setRoads(list => list.map(t =>
-                        roadGroup.includes(t.id)?{...t,x:t.x+nx-r.x,y:t.y+ny-r.y}:t))
-                    : updRoad({ ...r,x:nx,y:ny })
+                        roadGroup.includes(t.id)
+                          ? { ...t, x: t.x + nx - r.x, y: t.y + ny - r.y }
+                          : t,
+                      ))
+                    : updRoad({ ...r, x: nx, y: ny })
                 )}
-               style={{
+                style={{
                   background: P_FILL,
                   border: `3px solid ${P_EDGE}`,
                   borderRadius: 4,
@@ -441,42 +539,33 @@ const addZone = (name: string, color: string) =>
                   transition: 'box-shadow .15s',
                   zIndex: 30,
                 }}
-
               />
             );
           })}
         </div>
       </div>
 
-      {/* ── shelf side panel ── */}
+      {/* ───────────────── Shelf side-panel ───────────────── */}
       {selShelf && (
-  <div className="w-80 bg-white/10 border-l border-white/20 text-white p-4 space-y-4 backdrop-blur">
-    <div className="flex justify-between items-center">
-      <h3 className="font-bold text-lg">Edit Shelf</h3>
-     <Button
-        size="icon"
-        variant="secondary"
-        icon={<X className="h-4 w-4 text-white" />}
-        onClick={() => setSelShelf(null)}
-/>
-    </div>
+        <div className="w-80 bg-white/10 border-l border-white/20 text-white p-4 space-y-4 backdrop-blur">
+          <div className="flex justify-between items-center">
+            <h3 className="font-bold text-lg">Edit Shelf</h3>
+            <Button
+              size="icon"
+              variant="secondary"
+              icon={<X className="h-4 w-4 text-white" />}
+              onClick={() => setSelShelf(null)}
+            />
+          </div>
 
-
-          {/* ---------- label (rename) ---------- */}
+          {/* label (rename) */}
           <label className="text-xs font-semibold">Label</label>
           <input
             className="w-full bg-glass border border-glass px-2 py-1 rounded"
             value={selShelf.label}
             onChange={e => {
-              /* 1️⃣ create a NEW object (immutability) */
               const updated = { ...selShelf, label: e.target.value };
-
-              /* 2️⃣ update shelves list */
               updShelf(updated);
-
-              /* 3️⃣ refresh side panel’s local copy so the
-                    input stays controlled but never mutates
-                    the original reference (fixes “jump”)        */
               setSelShelf(updated);
             }}
           />
@@ -488,7 +577,7 @@ const addZone = (name: string, color: string) =>
               className="w-full bg-glass border border-glass px-2 py-1 rounded"
               placeholder="Search product…"
               value={query}
-              onChange={e=>setQuery(e.target.value)}
+              onChange={e => setQuery(e.target.value)}
             />
             {suggestions.length > 0 && (
               <div className="max-h-40 overflow-y-auto bg-glass border border-glass rounded text-sm shadow-lg">
@@ -496,7 +585,7 @@ const addZone = (name: string, color: string) =>
                   <div
                     key={p.id}
                     className="px-2 py-1 hover:bg-sky-600 hover:text-white cursor-pointer"
-                    onClick={()=>addProdToShelf(p.id)}
+                    onClick={() => addProdToShelf(p.id)}
                   >
                     {p.name}
                   </div>
@@ -508,11 +597,11 @@ const addZone = (name: string, color: string) =>
           {/* current items */}
           <div>
             <h4 className="font-semibold text-sm mb-1">Items on Shelf</h4>
-            {(selShelf.products as ShelfProduct[]).length === 0
+            {selShelf.products.length === 0
               ? <p className="text-xs text-gray-400">– empty –</p>
               : (
                 <ul className="space-y-1 text-xs">
-                  {(selShelf.products as ShelfProduct[]).map(p => {
+                  {selShelf.products.map(p => {
                     const prod = mockProducts.find(mp => mp.id === p.productId);
                     return (
                       <li key={p.productId} className="flex justify-between items-center">
@@ -521,7 +610,7 @@ const addZone = (name: string, color: string) =>
                           <input
                             type="number" min={1}
                             value={p.qty}
-                            onChange={e=>setQty(p.productId, Math.max(1, +e.target.value))}
+                            onChange={e => setQty(p.productId, Math.max(1, +e.target.value))}
                             className="w-14 bg-glass border border-glass rounded text-right px-1 py-0.5"
                           />
                           <Button
@@ -529,7 +618,7 @@ const addZone = (name: string, color: string) =>
                             size="icon"
                             icon={<Trash size={12} />}
                             onClick={() => delProd(p.productId)}
-                              />
+                          />
                         </span>
                       </li>
                     );
