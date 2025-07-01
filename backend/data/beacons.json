@@ -1,0 +1,101 @@
+[
+  {
+    "id": "y7pvsim9qRCw_aUs_7Dgr",
+    "name": "Ram's checkout",
+    "type": "qr",
+    "zoneId": "zone-W4Y7eSOExNSkec2Tt6t0x",
+    "status": "online",
+    "x": 853,
+    "y": 185
+  },
+  {
+    "id": "Tv8HeEW6j-rQAHli4z8cJ",
+    "name": "Shyam's checkout",
+    "type": "qr",
+    "zoneId": "zone-5fGSloy1WQzirdfk_m8ML",
+    "status": "offline",
+    "x": 860,
+    "y": 307
+  },
+  {
+    "id": "v3gUm4cgZdFBphUduwKwc",
+    "name": "oil",
+    "type": "ble",
+    "zoneId": "zone-gB9w5lSVtEE8lcHHm9MbV",
+    "status": "online",
+    "x": 649.8649795628589,
+    "y": 186.08110044567746
+  },
+  {
+    "id": "Q8VuFZp-2-8hGV1ozvdZs",
+    "name": "End Cap 3",
+    "type": "ble",
+    "zoneId": "zone-9xhVEdeI8afShs00U4AuD",
+    "status": "online",
+    "x": 208.864880356542,
+    "y": 101.32432462224119
+  },
+  {
+    "id": "ld9B6WgDyYFcHrYGncR7n",
+    "name": "End Cap 4",
+    "type": "ble",
+    "zoneId": "zone-9xhVEdeI8afShs00U4AuD",
+    "status": "online",
+    "x": 208.864880356542,
+    "y": 180.7838019567127
+  },
+  {
+    "id": "WTHop3vKxRVK9jgs8p9J8",
+    "name": "Island 3",
+    "type": "ble",
+    "zoneId": "zone-J_YrnAYKNzcYqNOIlSYKP",
+    "status": "online",
+    "x": 620.7298378735527,
+    "y": -28.459488357395628
+  },
+  {
+    "id": "47eQb0YIrE6rpL3SIAcGh",
+    "name": "Aisle 18",
+    "type": "ble",
+    "zoneId": "zone-J_YrnAYKNzcYqNOIlSYKP",
+    "status": "online",
+    "x": 530.6757635611516,
+    "y": -28.459488357395628
+  },
+  {
+    "id": "XF3Ond57KDuQBIjJDhBNd",
+    "name": "Aisle 19",
+    "type": "ble",
+    "zoneId": "zone-gB9w5lSVtEE8lcHHm9MbV",
+    "status": "online",
+    "x": 501.5406218718454,
+    "y": 183.43245120119508
+  },
+  {
+    "id": "8OO7VtP5zgi5wWHydae6x",
+    "name": "Aisle 20",
+    "type": "ble",
+    "zoneId": "zone-3qisLfbfx_Jvn4-XvhVM0",
+    "status": "offline",
+    "x": 453.86493547116254,
+    "y": 314.5405888030731
+  },
+  {
+    "id": "v79V0MYo018O73W76Qfnh",
+    "name": "Aisle 21",
+    "type": "ble",
+    "zoneId": "zone-gAED8Z24SVsGoyUnZ-QX4",
+    "status": "online",
+    "x": 845.8650236545553,
+    "y": -8.594619023777753
+  },
+  {
+    "id": "_T90m2RUoD77MXq7CFeR3",
+    "name": "End Cap 3",
+    "type": "ble",
+    "zoneId": "zone-3qisLfbfx_Jvn4-XvhVM0",
+    "status": "online",
+    "x": 587.567668251309,
+    "y": 316.00004859084913
+  }
+]
