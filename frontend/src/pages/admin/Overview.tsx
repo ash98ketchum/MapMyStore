@@ -5,6 +5,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import GlassCard from '../../components/ui/GlassCard';
 import Button from '../../components/ui/Button';
 import { mockAnalytics, mockEvents } from '../../data/mockData';
+ import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
+} from 'recharts';
+
 
 const Overview = () => {
   const navigate = useNavigate();
@@ -16,6 +20,16 @@ const Overview = () => {
     localStorage.removeItem("loggedIn");
     navigate("/signin/customer");
   };
+ 
+const mockSalesByDay = [
+  { day: 'Mon', sales: 120 },
+  { day: 'Tue', sales: 160 },
+  { day: 'Wed', sales: 200 },
+  { day: 'Thu', sales: 240 },
+  { day: 'Fri', sales: 310 },
+  { day: 'Sat', sales: 450 },
+  { day: 'Sun', sales: 380 }
+];
 // --------------------top search-------------------------------------------------
 useEffect(() => {
   const fetchTopSearches = async () => {
@@ -94,7 +108,7 @@ useEffect(() => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-400 text-sm mb-1">Heat Map</p>
-              <p className="text-2xl font-bold">4 Zones</p>
+              <p className="text-2xl font-bold">5 Zones</p>
               <p className="text-sm text-gray-400 mt-2">Real-time tracking</p>
             </div>
             <div className="h-12 w-12 bg-purple-500 bg-opacity-20 rounded-xl flex items-center justify-center">
@@ -106,35 +120,21 @@ useEffect(() => {
 
       {/* Heat Map and Events */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <GlassCard className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Store Heat Map</h2>
-          <div className="space-y-4">
-            {mockAnalytics.heatmapData.map((zone, index) => (
-              <motion.div
-                key={zone.zone}
-                className="flex items-center justify-between p-3 bg-glass rounded-lg"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <div className="flex items-center space-x-3">
-                  <div className={`h-3 w-3 rounded-full ${
-                    zone.visits > 60 ? 'bg-red-500' :
-                    zone.visits > 40 ? 'bg-yellow-500' : 'bg-green-500'
-                  }`} />
-                  <div>
-                    <p className="font-medium capitalize">{zone.zone}</p>
-                    <p className="text-sm text-gray-400">{zone.avgTime}min avg</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="font-semibold">{zone.visits}</p>
-                  <p className="text-sm text-gray-400">visits</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </GlassCard>
+       <GlassCard className="p-6">
+  <h2 className="text-xl font-semibold mb-4">Weekly Sales Overview</h2>
+  <ResponsiveContainer width="100%" height={220}>
+    <BarChart
+      data={mockSalesByDay}
+      margin={{ top: 10, right: 30, left: 0, bottom: 5 }}
+    >
+      <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+      <XAxis dataKey="day" tick={{ fill: '#aaa' }} />
+      <YAxis tick={{ fill: '#aaa' }} />
+      <Tooltip contentStyle={{ backgroundColor: "#222", borderColor: "#444" }} />
+      <Bar dataKey="sales" fill="#38bdf8" radius={[6, 6, 0, 0]} />
+    </BarChart>
+  </ResponsiveContainer>
+</GlassCard>
 
         <GlassCard className="p-6">
           <h2 className="text-xl font-semibold mb-4">Live Event Feed</h2>

@@ -126,7 +126,7 @@ useEffect(() => {
           </Link>
           
             <Button
-              variant="secondary"
+              variant="highlight"
               size="lg"
               icon={ShoppingCart}
               className={`w-full ${isAdded ? 'bg-green-500 text-white hover:bg-green-600' : ''}`}
@@ -146,10 +146,10 @@ useEffect(() => {
               {isAdded ? '✔ Added' : 'Add to Smart Cart'}
             </Button>
 
-
+{/* 
           <Button variant="highlight" size="lg" className="w-full">
             Mark as Found
-          </Button>
+          </Button> */}
         </motion.div>
 
         {/* Additional Info */}
