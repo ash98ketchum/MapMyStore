@@ -1,6 +1,6 @@
 {
   "name": "Current Layout",
-  "createdAt": 1751479150808,
+  "createdAt": 1751556710230,
   "scale": 0.9444865035418292,
   "offset": {
     "x": 6.759573686277918,
@@ -205,6 +205,39 @@
         {
           "productId": "31",
           "qty": 1
+        }
+      ]
+    },
+    {
+      "id": "W_HREyDN9or6RUHcl-VW_",
+      "label": "white cement",
+      "type": "aisle",
+      "x": 155.17312289138027,
+      "y": -45.99438907146836,
+      "width": 120,
+      "height": 40,
+      "zone": "zone-J_YrnAYKNzcYqNOIlSYKP",
+      "capacity": 50,
+      "products": [
+        {
+          "productId": "22",
+          "qty": 8
+        },
+        {
+          "productId": "30",
+          "qty": 4
+        },
+        {
+          "productId": "26",
+          "qty": 3
+        },
+        {
+          "productId": "23",
+          "qty": 3
+        },
+        {
+          "productId": "24",
+          "qty": 6
         }
       ]
     }
