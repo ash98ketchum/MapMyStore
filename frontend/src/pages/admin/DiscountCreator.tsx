@@ -1,82 +1,150 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+// src/pages/DiscountCreator.tsx
+
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Play, Square, Trash2, Zap } from 'lucide-react';
 import GlassCard from '../../components/ui/GlassCard';
-import Button from '../../components/ui/Button';
-import { mockDiscountRules } from '../../data/mockData';
+import Button    from '../../components/ui/Button';
 import { DiscountRule } from '../../types';
 
-const DiscountCreator = () => {
-  const [rules, setRules] = useState<DiscountRule[]>(mockDiscountRules);
+type RulePayload = {
+  name: string;
+  trigger:   { type: string; value: string };
+  condition: { type: string; value: string };
+  action:    { type: string; value: number };
+  active:    boolean;
+};
+
+const triggerTypes = [
+  { value: 'zone-enter',   label: 'Zone Entry'   },
+  { value: 'product-view', label: 'Product View' },
+  { value: 'time-based',   label: 'Time Based'   },
+];
+
+const conditionTypes = [
+  { value: 'category',  label: 'Product Category' },
+  { value: 'product',   label: 'Specific Product'  },
+  { value: 'user-type', label: 'User Type'         },
+];
+
+const actionTypes = [
+  { value: 'percentage',      label: 'Percentage Off'   },
+  { value: 'fixed-amount',    label: 'Fixed Amount Off' },
+  { value: 'buy-one-get-one', label: 'Buy One Get One'  },
+];
+
+export default function DiscountCreator() {
+  const [rules, setRules]               = useState<DiscountRule[]>([]);
+  const [loading, setLoading]           = useState(true);
+  const [beacons, setBeacons]           = useState<{id:string;name:string;status:string}[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newRule, setNewRule] = useState<Partial<DiscountRule>>({
+
+  const [newRule, setNewRule] = useState<Partial<RulePayload>>({
     name: '',
-    trigger: { type: 'zone-enter', value: '' },
-    condition: { type: 'category', value: '' },
-    action: { type: 'percentage', value: 0 },
-    active: true
+    trigger:   { type: 'zone-enter', value: '' },
+    condition: { type: 'category',   value: '' },
+    action:    { type: 'percentage', value: 0  },
+    active:    true,
   });
 
-  const triggerTypes = [
-    { value: 'zone-enter', label: 'Zone Entry' },
-    { value: 'product-view', label: 'Product View' },
-    { value: 'time-based', label: 'Time Based' }
-  ];
+  // ── fetch rules ────────────────────────────────────────
+  useEffect(() => {
+    fetch('/api/discount-rules')
+      .then(r => r.json())
+      .then((data: DiscountRule[]) => setRules(data))
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
 
-  const conditionTypes = [
-    { value: 'category', label: 'Product Category' },
-    { value: 'product', label: 'Specific Product' },
-    { value: 'user-type', label: 'User Type' }
-  ];
+  // ── fetch online beacons ───────────────────────────────
+  useEffect(() => {
+    fetch('/api/beacons')
+      .then(r => r.json())
+      .then((data: any[]) => setBeacons(data.filter(b => b.status === 'online')))
+      .catch(console.error);
+  }, []);
 
-  const actionTypes = [
-    { value: 'percentage', label: 'Percentage Off' },
-    { value: 'fixed-amount', label: 'Fixed Amount Off' },
-    { value: 'buy-one-get-one', label: 'Buy One Get One' }
-  ];
-
-  const toggleRule = (ruleId: string) => {
-    setRules(rules.map(rule => 
-      rule.id === ruleId ? { ...rule, active: !rule.active } : rule
-    ));
+  // ── toggle active/inactive ─────────────────────────────
+  const toggleRule = async (id:string, active:boolean) => {
+    setRules(rs => rs.map(r => r.id===id ? { ...r, active: !active } : r));
+    try {
+      await fetch(`/api/discount-rules/${id}`, {
+        method:'PATCH',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ active: !active }),
+      });
+    } catch {
+      // revert on failure
+      setRules(rs => rs.map(r => r.id===id ? { ...r, active } : r));
+    }
   };
 
-  const deleteRule = (ruleId: string) => {
-    setRules(rules.filter(rule => rule.id !== ruleId));
+  // ── delete a rule ──────────────────────────────────────
+  const deleteRule = async (id:string) => {
+    if (!confirm('Delete this rule?')) return;
+    setRules(rs => rs.filter(r => r.id !== id));
+    try {
+      await fetch(`/api/discount-rules/${id}`, { method:'DELETE' });
+    } catch {
+      // reload on error
+      fetch('/api/discount-rules')
+        .then(r => r.json())
+        .then((d:DiscountRule[]) => setRules(d));
+    }
   };
 
-  const createRule = () => {
-    if (newRule.name && newRule.trigger && newRule.condition && newRule.action) {
-      const rule: DiscountRule = {
-        id: `rule-${Date.now()}`,
-        name: newRule.name,
-        trigger: newRule.trigger,
-        condition: newRule.condition,
-        action: newRule.action,
-        active: newRule.active || false
-      };
-      setRules([...rules, rule]);
+  // ── create new rule ────────────────────────────────────
+  const createRule = async () => {
+    if (
+      !newRule.name ||
+      !newRule.trigger?.type || !newRule.trigger.value ||
+      !newRule.condition?.type || !newRule.condition.value ||
+      !newRule.action?.type   || newRule.action.value == null
+    ) {
+      return alert('Please fill out all fields');
+    }
+    const payload: RulePayload = {
+      name: newRule.name!,
+      trigger:   newRule.trigger!,
+      condition: newRule.condition!,
+      action:    newRule.action!,
+      active:    newRule.active!,
+    };
+    try {
+      const res = await fetch('/api/discount-rules', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload),
+      });
+      const created: DiscountRule = await res.json();
+      setRules(rs => [...rs, created]);
       setShowCreateModal(false);
       setNewRule({
         name: '',
-        trigger: { type: 'zone-enter', value: '' },
-        condition: { type: 'category', value: '' },
-        action: { type: 'percentage', value: 0 },
-        active: true
+        trigger:   { type:'zone-enter', value:'' },
+        condition: { type:'category',   value:'' },
+        action:    { type:'percentage', value:0  },
+        active:    true,
       });
+    } catch {
+      alert('Failed to create rule');
     }
   };
+
+  if (loading) {
+    return <div className="p-6 text-center">Loading rules…</div>;
+  }
 
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Dynamic Discount Creator</h1>
-          <p className="text-gray-400">Create and manage location-based discount rules</p>
+          <h1 className="text-3xl font-bold">Discount Rules</h1>
+          <p className="text-gray-400">Location-based offers</p>
         </div>
-        <Button variant="primary" icon={Plus} onClick={() => setShowCreateModal(true)}>
-          Create New Rule
+        <Button variant="primary" icon={Plus} onClick={()=>setShowCreateModal(true)}>
+          New Rule
         </Button>
       </div>
 
@@ -84,78 +152,35 @@ const DiscountCreator = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <GlassCard className="p-4 text-center">
           <p className="text-2xl font-bold text-accent">{rules.length}</p>
-          <p className="text-sm text-gray-400">Total Rules</p>
+          <p className="text-sm text-gray-400">Total</p>
         </GlassCard>
-        
         <GlassCard className="p-4 text-center">
-          <p className="text-2xl font-bold text-green-400">
-            {rules.filter(r => r.active).length}
-          </p>
-          <p className="text-sm text-gray-400">Active Rules</p>
+          <p className="text-2xl font-bold text-green-400">{rules.filter(r=>r.active).length}</p>
+          <p className="text-sm text-gray-400">Active</p>
         </GlassCard>
-        
         <GlassCard className="p-4 text-center">
-          <p className="text-2xl font-bold text-highlight">247</p>
-          <p className="text-sm text-gray-400">Offers Triggered Today</p>
+          <p className="text-2xl font-bold text-highlight">—</p>
+          <p className="text-sm text-gray-400">Triggered Today</p>
         </GlassCard>
       </div>
 
-      {/* Visual Flow Builder */}
+      {/* Flow Preview */}
       <GlassCard className="p-6">
         <h2 className="text-xl font-semibold mb-4">Flow Builder</h2>
-        <div className="flex items-center justify-center space-x-8 py-8">
-          {/* Trigger Node */}
-          <motion.div
-            className="relative"
-            whileHover={{ scale: 1.05 }}
-          >
-            <div className="w-32 h-20 bg-accent bg-opacity-20 border-2 border-accent rounded-xl flex items-center justify-center">
-              <div className="text-center">
-                <Zap className="h-6 w-6 text-accent mx-auto mb-1" />
-                <p className="text-sm font-medium">Trigger</p>
-                <p className="text-xs text-gray-400">Zone Enter</p>
-              </div>
-            </div>
+        <div className="flex items-center justify-center space-x-8">
+          <motion.div whileHover={{ scale:1.05 }}>
+            <Zap className="h-6 w-6 text-accent mb-1"/>
+            <p>Trigger</p>
           </motion.div>
-
-          {/* Arrow */}
-          <div className="flex items-center">
-            <div className="w-8 h-0.5 bg-accent"></div>
-            <div className="w-0 h-0 border-l-4 border-l-accent border-t-2 border-t-transparent border-b-2 border-b-transparent"></div>
-          </div>
-
-          {/* Condition Node */}
-          <motion.div
-            className="relative"
-            whileHover={{ scale: 1.05 }}
-          >
-            <div className="w-32 h-20 bg-highlight bg-opacity-20 border-2 border-highlight rounded-xl flex items-center justify-center">
-              <div className="text-center">
-                <Square className="h-6 w-6 text-highlight mx-auto mb-1" />
-                <p className="text-sm font-medium">Condition</p>
-                <p className="text-xs text-gray-400">Category = Snacks</p>
-              </div>
-            </div>
+          <div className="w-8 h-0.5 bg-accent"/>
+          <motion.div whileHover={{ scale:1.05 }}>
+            <Square className="h-6 w-6 text-highlight mb-1"/>
+            <p>Condition</p>
           </motion.div>
-
-          {/* Arrow */}
-          <div className="flex items-center">
-            <div className="w-8 h-0.5 bg-accent"></div>
-            <div className="w-0 h-0 border-l-4 border-l-accent border-t-2 border-t-transparent border-b-2 border-b-transparent"></div>
-          </div>
-
-          {/* Action Node */}
-          <motion.div
-            className="relative"
-            whileHover={{ scale: 1.05 }}
-          >
-            <div className="w-32 h-20 bg-green-500 bg-opacity-20 border-2 border-green-500 rounded-xl flex items-center justify-center">
-              <div className="text-center">
-                <Play className="h-6 w-6 text-green-400 mx-auto mb-1" />
-                <p className="text-sm font-medium">Action</p>
-                <p className="text-xs text-gray-400">15% Off</p>
-              </div>
-            </div>
+          <div className="w-8 h-0.5 bg-accent"/>
+          <motion.div whileHover={{ scale:1.05 }}>
+            <Play className="h-6 w-6 text-green-400 mb-1"/>
+            <p>Action</p>
           </motion.div>
         </div>
       </GlassCard>
@@ -163,194 +188,212 @@ const DiscountCreator = () => {
       {/* Rules List */}
       <GlassCard className="overflow-hidden">
         <div className="p-6 border-b border-glass">
-          <h2 className="text-xl font-semibold">Discount Rules</h2>
+          <h2 className="text-xl font-semibold">All Rules</h2>
         </div>
-        
         <div className="divide-y divide-glass">
-          {rules.map((rule, index) => (
-            <motion.div
-              key={rule.id}
-              className="p-6 hover:bg-glass hover:bg-opacity-50 transition-colors"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-3 mb-2">
-                    <h3 className="text-lg font-semibold">{rule.name}</h3>
-                    <span className={`px-2 py-1 rounded-full text-xs ${
-                      rule.active ? 'bg-green-500 bg-opacity-20 text-green-400' : 'bg-gray-500 bg-opacity-20 text-gray-400'
-                    }`}>
-                      {rule.active ? 'Active' : 'Inactive'}
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-center space-x-6 text-sm text-gray-400">
-                    <div className="flex items-center space-x-2">
-                      <Zap className="h-4 w-4 text-accent" />
-                      <span>Trigger: {rule.trigger.type} ({rule.trigger.value})</span>
+          {rules.map((r,i) => {
+            const beaconName = beacons.find(b=>b.id===r.trigger.value)?.name || r.trigger.value;
+            return (
+              <motion.div
+                key={r.id}
+                className="p-6 hover:bg-glass hover:bg-opacity-50 transition-colors"
+                initial={{ opacity:0, y:20 }}
+                animate={{ opacity:1, y:0 }}
+                transition={{ delay:i*0.1 }}
+              >
+                <div className="flex justify-between items-center">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-3 mb-2">
+                      <h3 className="text-lg font-semibold">{r.name}</h3>
+                      <span className={`px-2 py-1 rounded-full text-xs ${
+                        r.active
+                          ? 'bg-green-500 bg-opacity-20 text-green-400'
+                          : 'bg-gray-500 bg-opacity-20 text-gray-400'
+                      }`}>
+                        {r.active ? 'Active' : 'Inactive'}
+                      </span>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <Square className="h-4 w-4 text-highlight" />
-                      <span>Condition: {rule.condition.type} = {rule.condition.value}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Play className="h-4 w-4 text-green-400" />
-                      <span>Action: {rule.action.value}% off</span>
+                    <div className="text-sm text-gray-400 space-y-1">
+                      <div>Trigger: {r.trigger.type} ({beaconName})</div>
+                      <div>Condition: {r.condition.type} = {r.condition.value}</div>
+                      <div>Action: {r.action.value}% off</div>
                     </div>
                   </div>
+                  <div className="flex space-x-2">
+                    <Button
+                      variant={r.active?'secondary':'primary'}
+                      size="sm"
+                      onClick={()=>toggleRule(r.id, r.active)}
+                    >
+                      {r.active?'Pause':'Activate'}
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      icon={Trash2}
+                      onClick={()=>deleteRule(r.id)}
+                    />
+                  </div>
                 </div>
-                
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant={rule.active ? "secondary" : "primary"}
-                    size="sm"
-                    onClick={() => toggleRule(rule.id)}
-                  >
-                    {rule.active ? 'Pause' : 'Activate'}
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    icon={Trash2}
-                    onClick={() => deleteRule(rule.id)}
-                  >
-                    Delete
-                  </Button>
-                </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            );
+          })}
         </div>
       </GlassCard>
 
-      {/* Create Rule Modal */}
-      {showCreateModal && (
-        <motion.div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-        >
+      {/* Create Modal */}
+      <AnimatePresence>
+        {showCreateModal && (
           <motion.div
-            className="bg-primary border border-glass rounded-xl p-6 w-full max-w-lg mx-4"
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+            initial={{ opacity:0 }}
+            animate={{ opacity:1 }}
+            exit   ={{ opacity:0 }}
           >
-            <h2 className="text-xl font-bold mb-4">Create New Discount Rule</h2>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Rule Name</label>
+            <motion.div
+              className="bg-primary border border-glass rounded-xl p-6 w-full max-w-lg mx-4"
+              initial={{ scale:0.9, opacity:0 }}
+              animate={{ scale:1, opacity:1 }}
+              exit   ={{ scale:0.9, opacity:0 }}
+            >
+              <h2 className="text-xl font-bold mb-4">New Discount Rule</h2>
+
+              {/* Name */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1">Rule Name</label>
                 <input
                   type="text"
                   value={newRule.name}
-                  onChange={(e) => setNewRule({...newRule, name: e.target.value})}
-                  className="w-full px-3 py-2 bg-glass rounded-lg border border-glass focus:border-accent focus:outline-none"
-                  placeholder="e.g., Snacks Zone Welcome Offer"
+                  onChange={e=>setNewRule({...newRule, name:e.target.value})}
+                  className="w-full px-3 py-2 bg-glass rounded-lg border border-glass focus:border-accent"
+                  placeholder="e.g. Snacks Offer"
                 />
               </div>
-              
-              <div className="grid grid-cols-2 gap-4">
+
+              {/* Trigger */}
+              <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Trigger Type</label>
+                  <label className="block text-sm font-medium mb-1">Trigger Type</label>
                   <select
                     value={newRule.trigger?.type}
-                    onChange={(e) => setNewRule({...newRule, trigger: {...newRule.trigger!, type: e.target.value as any}})}
-                    className="w-full px-3 py-2 bg-glass rounded-lg border border-glass focus:border-accent focus:outline-none"
+                    onChange={e=>
+                      setNewRule({
+                        ...newRule,
+                        trigger:{...(newRule.trigger!), type:e.target.value}
+                      })
+                    }
+                    className="w-full px-3 py-2 bg-glass rounded-lg border border-glass focus:border-accent"
                   >
-                    {triggerTypes.map(type => (
-                      <option key={type.value} value={type.value}>{type.label}</option>
+                    {triggerTypes.map(t=>(
+                      <option key={t.value} value={t.value}>{t.label}</option>
                     ))}
                   </select>
                 </div>
-                
                 <div>
-                  <label className="block text-sm font-medium mb-2">Trigger Value</label>
-                  <input
-                    type="text"
+                  <label className="block text-sm font-medium mb-1">Beacon</label>
+                  <select
                     value={newRule.trigger?.value}
-                    onChange={(e) => setNewRule({...newRule, trigger: {...newRule.trigger!, value: e.target.value}})}
-                    className="w-full px-3 py-2 bg-glass rounded-lg border border-glass focus:border-accent focus:outline-none"
-                    placeholder="e.g., snacks"
-                  />
+                    onChange={e=>
+                      setNewRule({
+                        ...newRule,
+                        trigger:{...(newRule.trigger!), value:e.target.value}
+                      })
+                    }
+                    className="w-full px-3 py-2 bg-glass rounded-lg border border-glass focus:border-accent"
+                  >
+                    <option value="">– select beacon –</option>
+                    {beacons.map(b=>(
+                      <option key={b.id} value={b.id}>{b.name}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
-              
-              <div className="grid grid-cols-2 gap-4">
+
+              {/* Condition */}
+              <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Condition Type</label>
+                  <label className="block text-sm font-medium mb-1">Condition Type</label>
                   <select
                     value={newRule.condition?.type}
-                    onChange={(e) => setNewRule({...newRule, condition: {...newRule.condition!, type: e.target.value as any}})}
-                    className="w-full px-3 py-2 bg-glass rounded-lg border border-glass focus:border-accent focus:outline-none"
+                    onChange={e=>
+                      setNewRule({
+                        ...newRule,
+                        condition:{...(newRule.condition!), type:e.target.value}
+                      })
+                    }
+                    className="w-full px-3 py-2 bg-glass rounded-lg border border-glass focus:border-accent"
                   >
-                    {conditionTypes.map(type => (
-                      <option key={type.value} value={type.value}>{type.label}</option>
+                    {conditionTypes.map(t=>(
+                      <option key={t.value} value={t.value}>{t.label}</option>
                     ))}
                   </select>
                 </div>
-                
                 <div>
-                  <label className="block text-sm font-medium mb-2">Condition Value</label>
+                  <label className="block text-sm font-medium mb-1">Condition Value</label>
                   <input
                     type="text"
                     value={newRule.condition?.value}
-                    onChange={(e) => setNewRule({...newRule, condition: {...newRule.condition!, value: e.target.value}})}
-                    className="w-full px-3 py-2 bg-glass rounded-lg border border-glass focus:border-accent focus:outline-none"
-                    placeholder="e.g., Snacks"
+                    onChange={e=>
+                      setNewRule({
+                        ...newRule,
+                        condition:{...(newRule.condition!), value:e.target.value}
+                      })
+                    }
+                    className="w-full px-3 py-2 bg-glass rounded-lg border border-glass focus:border-accent"
+                    placeholder="e.g. Snacks"
                   />
                 </div>
               </div>
-              
-              <div className="grid grid-cols-2 gap-4">
+
+              {/* Action */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Action Type</label>
+                  <label className="block text-sm font-medium mb-1">Action Type</label>
                   <select
                     value={newRule.action?.type}
-                    onChange={(e) => setNewRule({...newRule, action: {...newRule.action!, type: e.target.value as any}})}
-                    className="w-full px-3 py-2 bg-glass rounded-lg border border-glass focus:border-accent focus:outline-none"
+                    onChange={e=>
+                      setNewRule({
+                        ...newRule,
+                        action:{...(newRule.action!), type:e.target.value}
+                      })
+                    }
+                    className="w-full px-3 py-2 bg-glass rounded-lg border border-glass focus:border-accent"
                   >
-                    {actionTypes.map(type => (
-                      <option key={type.value} value={type.value}>{type.label}</option>
+                    {actionTypes.map(t=>(
+                      <option key={t.value} value={t.value}>{t.label}</option>
                     ))}
                   </select>
                 </div>
-                
                 <div>
-                  <label className="block text-sm font-medium mb-2">Discount Value</label>
+                  <label className="block text-sm font-medium mb-1">Discount Value</label>
                   <input
                     type="number"
                     value={newRule.action?.value}
-                    onChange={(e) => setNewRule({...newRule, action: {...newRule.action!, value: parseInt(e.target.value)}})}
-                    className="w-full px-3 py-2 bg-glass rounded-lg border border-glass focus:border-accent focus:outline-none"
-                    placeholder="15"
+                    onChange={e=>
+                      setNewRule({
+                        ...newRule,
+                        action:{...(newRule.action!), value:Number(e.target.value)}
+                      })
+                    }
+                    className="w-full px-3 py-2 bg-glass rounded-lg border border-glass focus:border-accent"
+                    placeholder="e.g. 15"
                   />
                 </div>
               </div>
-            </div>
-            
-            <div className="flex space-x-3 mt-6">
-              <Button
-                variant="primary"
-                onClick={createRule}
-                className="flex-1"
-              >
-                Create Rule
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={() => setShowCreateModal(false)}
-                className="flex-1"
-              >
-                Cancel
-              </Button>
-            </div>
+
+              {/* Buttons */}
+              <div className="flex space-x-3">
+                <Button variant="primary" onClick={createRule} className="flex-1">
+                  Create Rule
+                </Button>
+                <Button variant="secondary" onClick={()=>setShowCreateModal(false)} className="flex-1">
+                  Cancel
+                </Button>
+              </div>
+            </motion.div>
           </motion.div>
-        </motion.div>
-      )}
+        )}
+      </AnimatePresence>
     </div>
   );
-};
-
-export default DiscountCreator;
+}

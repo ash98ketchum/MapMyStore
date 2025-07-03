@@ -1,0 +1,19 @@
+[
+  {
+    "name": "oreo",
+    "trigger": {
+      "type": "zone-enter",
+      "value": "v3gUm4cgZdFBphUduwKwc"
+    },
+    "condition": {
+      "type": "category",
+      "value": "Snacks"
+    },
+    "action": {
+      "type": "percentage",
+      "value": 13
+    },
+    "active": true,
+    "id": "rule-1751571556598"
+  }
+]

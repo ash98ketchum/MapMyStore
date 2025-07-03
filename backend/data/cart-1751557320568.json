@@ -1,0 +1,26 @@
+[
+  {
+    "id": "4",
+    "name": "Aashirvaad Atta",
+    "category": "Groceries",
+    "quantity": 1,
+    "price": 4.99,
+    "shelfId": "shelf-4"
+  },
+  {
+    "id": "9",
+    "name": "Turmeric Powder",
+    "category": "Groceries",
+    "quantity": 1,
+    "price": 4.99,
+    "shelfId": "shelf-9"
+  },
+  {
+    "id": "21",
+    "name": "Dove Soap",
+    "category": "Beauty & Health",
+    "quantity": 1,
+    "price": 4.99,
+    "shelfId": "shelf-21"
+  }
+]
