@@ -253,6 +253,23 @@ app.post('/api/apply-discount', async (req,res) => {
   }
 });
 
+/* ═════════ APPLY DISCOUNT ═════════ */
+app.post('/api/apply-discount', async (req, res) => {
+  const { ruleId } = req.body;
+  if (typeof ruleId !== 'string') {
+    return res.status(400).json({ error:'ruleId is required' });
+  }
+  try {
+    const taken = (await readJSON(TAKEN_FILE)) || [];
+    taken.push({ ruleId, takenAt: new Date().toISOString() });
+    await writeJSON(TAKEN_FILE, taken);
+    res.json({ success:true });
+  } catch (err) {
+    console.error('[apply-discount]', err);
+    res.status(500).json({ error:'Failed to record discount' });
+  }
+});
+
 /* ═════════ SEARCH TRACKING ═════════ */
 app.post('/api/search', async (req,res) => {
   const { product } = req.body;
@@ -268,16 +285,111 @@ app.get('/api/search/top', async (_req,res) => {
   const sorted = Object.entries(data).sort(([,a],[,b])=>b-a);
   res.json({ topSearches: sorted.length ? [sorted[0][0]] : [] });
 });
+// ───────── PRODUCT-LOCATIONS API ─────────
 
-/* ═════════ SAVE CART ═════════ */
-app.post('/api/save-cart', async (req,res) => {
+// GET all products from current layout with their shelf info
+app.get('/api/product-locations', async (_req, res) => {
+  const layout = await readJSON(LAYOUT_FILE);
+  if (!layout) return res.status(404).json({ error: 'No layout found' });
+
+  const out = [];
+  for (const shelf of layout.shelves) {
+    for (const p of shelf.products) {
+      out.push({
+        productId:   p.productId,
+        quantity:    p.qty,
+        shelfId:     shelf.id,
+        shelfType:   shelf.type,
+        shelfLabel:  shelf.label,
+        zone:        shelf.zone,
+      });
+    }
+  }
+  res.json(out);
+});
+
+// POST update a product’s shelf & quantity
+app.post('/api/product-locations', async (req, res) => {
+  const { productId, shelfId, qty } = req.body;
+  if (!productId || !shelfId || typeof qty !== 'number') {
+    return res.status(400).json({ error: 'productId, shelfId and numeric qty required' });
+  }
+
+  // load layout
+  const layout = await readJSON(LAYOUT_FILE);
+  if (!layout) return res.status(404).json({ error: 'Layout not found' });
+
+  // remove from any shelf
+  layout.shelves.forEach(s => {
+    s.products = s.products.filter(p => p.productId !== productId);
+  });
+
+  // if qty>0, add to target shelf
+  if (qty > 0) {
+    const target = layout.shelves.find(s => s.id === shelfId);
+    if (!target) return res.status(404).json({ error: 'Shelf not found' });
+    target.products.push({ productId, qty });
+  }
+
+  // save updated layout
+  await writeJSON(LAYOUT_FILE, layout);
+  res.json({ success: true });
+});
+
+/* ═════════ SAVE CART ───────────── */
+app.post('/api/save-cart', async (req, res) => {
   const cart = req.body;
   if (!Array.isArray(cart)) {
     return res.status(400).json({ success:false, message:'Expected array of cart items' });
   }
+
+  // 1) Apply active discounts
+  const rules = (await readJSON(DISCOUNT_FILE)) || [];
+  const activeRules = rules.filter(r => r.active);
+  const discountedCart = cart.map(item => {
+    const rule = activeRules.find(r =>
+      (r.condition.type === 'product'  && r.condition.value === item.id) ||
+      (r.condition.type === 'category' && r.condition.value === item.category)
+    );
+    if (!rule) return item;
+
+    const out = { ...item };
+    switch (rule.action.type) {
+      case 'percentage':
+        out.price = +((out.price * (1 - rule.action.value / 100)).toFixed(2));
+        break;
+      case 'fixed-amount':
+        out.price = +((Math.max(0, out.price - rule.action.value)).toFixed(2));
+        break;
+      case 'buy-one-get-one':
+        out.quantity = out.quantity + 1;
+        break;
+    }
+    out.discountApplied = rule.id;
+    return out;
+  });
+
+  // 2) Compute today's path: year/month/week/day
+  const now       = new Date();
+  const year      = now.getFullYear().toString();
+  const monthName = now.toLocaleString('default',{ month:'long' }).toLowerCase();
+  const dayOfMonth= now.getDate();
+  const week      = `week${Math.floor((dayOfMonth-1)/7)+1}`;
+  const weekday   = now.toLocaleString('default',{ weekday:'long' }).toLowerCase();
+
+  const cartDir = path.join(DATA_DIR, 'cart', year, monthName, week, weekday);
+  await fsp.mkdir(cartDir, { recursive: true });
+
+  // 3) Write the cart JSON
   const fileName = `cart-${Date.now()}.json`;
-  await fsp.writeFile(path.join(DATA_DIR,fileName), JSON.stringify(cart,null,2),'utf8');
-  res.json({ success:true, message:'Cart saved', file:fileName });
+  const fullPath = path.join(cartDir, fileName);
+  await fsp.writeFile(fullPath, JSON.stringify(discountedCart, null, 2), 'utf8');
+
+  res.json({
+    success: true,
+    message: 'Cart saved',
+    path: fullPath.replace(DATA_DIR + path.sep, '')
+  });
 });
 
 /* ═════════ START SERVER ═════════ */

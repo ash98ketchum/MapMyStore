@@ -1,0 +1,27 @@
+[
+  {
+    "id": "1",
+    "name": "Organic Bananas",
+    "category": "Groceries",
+    "quantity": 10,
+    "price": 4.99,
+    "shelfId": "shelf-1"
+  },
+  {
+    "id": "6",
+    "name": "Fortune Oil",
+    "category": "Groceries",
+    "quantity": 7,
+    "price": 4.99,
+    "shelfId": "shelf-6"
+  },
+  {
+    "id": "13",
+    "name": "Oreo Cookies",
+    "category": "Snacks",
+    "quantity": 10,
+    "price": 4.34,
+    "shelfId": "shelf-13",
+    "discountApplied": "rule-1751571556598"
+  }
+]

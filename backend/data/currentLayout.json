@@ -224,10 +224,6 @@
           "qty": 8
         },
         {
-          "productId": "30",
-          "qty": 4
-        },
-        {
           "productId": "26",
           "qty": 3
         },
@@ -238,6 +234,10 @@
         {
           "productId": "24",
           "qty": 6
+        },
+        {
+          "productId": "30",
+          "qty": 10
         }
       ]
     }
