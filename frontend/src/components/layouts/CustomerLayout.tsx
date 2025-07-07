@@ -1,5 +1,6 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
+import Chatbot from '../ui/Chatbot';
 
 const CustomerLayout = () => {
   return (
@@ -8,6 +9,7 @@ const CustomerLayout = () => {
       <div className="h-screen flex flex-col">
         <Outlet />
       </div>
+      <Chatbot />
     </div>
   );
 };
