@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import Chatbot from '../../components/ui/Chatbot';
 import {
   Search,
   Map,
@@ -249,6 +250,7 @@ const Home: React.FC = () => {
           </div>
         </div>
       </div>
+      <Chatbot />
     </div>
   );
 };
