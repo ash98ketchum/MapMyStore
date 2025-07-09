@@ -132,7 +132,7 @@ export default function DiscountCreator() {
   };
 
   if (loading) {
-    return <div className="p-6 text-center">Loading rules…</div>;
+    return <div className="p-6 text-center text-xl text-black">Loading rules…</div>;
   }
 
   return (
@@ -140,106 +140,106 @@ export default function DiscountCreator() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Discount Rules</h1>
-          <p className="text-gray-400">Location-based offers</p>
+          <h1 className="text-5xl font-bold text-black">Discount Rules</h1>
+          <p className="text-gray-500 text-xl">Location-based offers</p>
         </div>
-        <Button variant="primary" icon={Plus} onClick={()=>setShowCreateModal(true)}>
+        <Button variant="primary" icon={Plus} onClick={() => setShowCreateModal(true)} className="text-lg px-6 py-3">
           New Rule
         </Button>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <GlassCard className="p-4 text-center">
-          <p className="text-2xl font-bold text-accent">{rules.length}</p>
-          <p className="text-sm text-gray-400">Total</p>
+        <GlassCard className="p-8 text-center text-xl">
+          <p className="text-4xl font-bold text-accent">{rules.length}</p>
+          <p className="text-lg text-black/70">Total</p>
         </GlassCard>
-        <GlassCard className="p-4 text-center">
-          <p className="text-2xl font-bold text-green-400">{rules.filter(r=>r.active).length}</p>
-          <p className="text-sm text-gray-400">Active</p>
+        <GlassCard className="p-8 text-center text-xl">
+          <p className="text-4xl font-bold text-green-400">{rules.filter(r => r.active).length}</p>
+          <p className="text-lg text-black/70">Active</p>
         </GlassCard>
-        <GlassCard className="p-4 text-center">
-          <p className="text-2xl font-bold text-highlight">—</p>
-          <p className="text-sm text-gray-400">Triggered Today</p>
+        <GlassCard className="p-8 text-center text-xl">
+          <p className="text-4xl font-bold text-highlight">—</p>
+          <p className="text-lg text-black/70">Triggered Today</p>
         </GlassCard>
       </div>
 
       {/* Flow Preview */}
-      <GlassCard className="p-6">
-        <h2 className="text-xl font-semibold mb-4">Flow Builder</h2>
+      <GlassCard className="p-10 bg-blue-100/40 backdrop-blur-md rounded-2xl">
+        <h2 className="text-3xl font-semibold mb-6 text-black">Flow Builder</h2>
         <div className="flex items-center justify-center space-x-8">
-          <motion.div whileHover={{ scale:1.05 }}>
-            <Zap className="h-6 w-6 text-accent mb-1"/>
-            <p>Trigger</p>
+          <motion.div whileHover={{ scale: 1.1 }} className="text-black">
+            <Zap className="h-10 w-10 text-accent mb-1" />
+            <p className="text-xl">Trigger</p>
           </motion.div>
-          <div className="w-8 h-0.5 bg-accent"/>
-          <motion.div whileHover={{ scale:1.05 }}>
-            <Square className="h-6 w-6 text-highlight mb-1"/>
-            <p>Condition</p>
+          <div className="w-10 h-0.5 bg-accent" />
+          <motion.div whileHover={{ scale: 1.1 }} className="text-black">
+            <Square className="h-10 w-10 text-highlight mb-1" />
+            <p className="text-xl">Condition</p>
           </motion.div>
-          <div className="w-8 h-0.5 bg-accent"/>
-          <motion.div whileHover={{ scale:1.05 }}>
-            <Play className="h-6 w-6 text-green-400 mb-1"/>
-            <p>Action</p>
+          <div className="w-10 h-0.5 bg-accent" />
+          <motion.div whileHover={{ scale: 1.1 }} className="text-black">
+            <Play className="h-10 w-10 text-green-400 mb-1" />
+            <p className="text-xl">Action</p>
           </motion.div>
         </div>
       </GlassCard>
 
       {/* Rules List */}
-      <GlassCard className="overflow-hidden">
-        <div className="p-6 border-b border-glass">
-          <h2 className="text-xl font-semibold">All Rules</h2>
-        </div>
-        <div className="divide-y divide-glass">
-          {rules.map((r,i) => {
-            const beaconName = beacons.find(b=>b.id===r.trigger.value)?.name || r.trigger.value;
-            return (
-              <motion.div
-                key={r.id}
-                className="p-6 hover:bg-glass hover:bg-opacity-50 transition-colors"
-                initial={{ opacity:0, y:20 }}
-                animate={{ opacity:1, y:0 }}
-                transition={{ delay:i*0.1 }}
-              >
-                <div className="flex justify-between items-center">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <h3 className="text-lg font-semibold">{r.name}</h3>
-                      <span className={`px-2 py-1 rounded-full text-xs ${
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {rules.map((r, i) => {
+          const beaconName = beacons.find(b => b.id === r.trigger.value)?.name || r.trigger.value;
+          return (
+            <motion.div
+              key={r.id}
+              className="bg-white/30 backdrop-blur-md border border-white/20 rounded-2xl p-8 shadow-xl hover:scale-[1.03] hover:shadow-2xl hover:bg-gray-300 transition-transform duration-300"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+            >
+              <div className="flex justify-between items-start">
+                <div className="flex-1 space-y-4">
+                  <div className="flex items-center space-x-4">
+                    <h3 className="text-2xl font-semibold text-black">{r.name}</h3>
+                    <span
+                      className={`px-4 py-1 rounded-full text-md font-medium ${
                         r.active
-                          ? 'bg-green-500 bg-opacity-20 text-green-400'
-                          : 'bg-gray-500 bg-opacity-20 text-gray-400'
-                      }`}>
-                        {r.active ? 'Active' : 'Inactive'}
-                      </span>
-                    </div>
-                    <div className="text-sm text-gray-400 space-y-1">
-                      <div>Trigger: {r.trigger.type} ({beaconName})</div>
-                      <div>Condition: {r.condition.type} = {r.condition.value}</div>
-                      <div>Action: {r.action.value}% off</div>
-                    </div>
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button
-                      variant={r.active?'secondary':'primary'}
-                      size="sm"
-                      onClick={()=>toggleRule(r.id, r.active)}
+                          ? 'bg-green-500/20 text-green-600'
+                          : 'bg-gray-400/20 text-gray-600'
+                      }`}
                     >
-                      {r.active?'Pause':'Activate'}
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      icon={Trash2}
-                      onClick={()=>deleteRule(r.id)}
-                    />
+                      {r.active ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+                  <div className="text-lg text-black/80 space-y-2">
+                    <div><strong>Trigger:</strong> {r.trigger.type} ({beaconName})</div>
+                    <div><strong>Condition:</strong> {r.condition.type} = {r.condition.value}</div>
+                    <div><strong>Action:</strong> {r.action.value}% off</div>
                   </div>
                 </div>
-              </motion.div>
-            );
-          })}
-        </div>
-      </GlassCard>
+                <div className="flex flex-col items-end space-y-3">
+                  <Button
+                    variant={r.active ? 'secondary' : 'primary'}
+                    size="lg"
+                    onClick={() => toggleRule(r.id, r.active)}
+                    className="!text-gray-800 px-5 py-2 border border-gray-300 hover:bg-gray-200"
+                  >
+                    {r.active ? 'Pause' : 'Activate'}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    icon={Trash2}
+                    onClick={() => deleteRule(r.id)}
+                    className="text-center !text-gray-800 px-5 py-2 border border-gray-300 hover:bg-gray-200"
+                  />
+                </div>
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+
 
       {/* Create Modal */}
       <AnimatePresence>

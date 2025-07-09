@@ -240,8 +240,9 @@ export default function FloorPlanDesigner() {
   /* ────────────────────────────────────────────────────────
    *  Road placement helpers (unchanged)
    * ──────────────────────────────────────────────────────── */
-  const placeRoadStart = (e: React.MouseEvent) => {
-    if (!placingRoad || !canvasRef.current) return;
+    const placeRoadStart = (e: React.MouseEvent) => {
+      console.log('canvas clicked:', placingRoad);
+      if (!placingRoad || !canvasRef.current) return;
     const rect = canvasRef.current.getBoundingClientRect();
     const wx = (e.clientX - rect.left - offset.x) / scale;
     const wy = (e.clientY - rect.top  - offset.y) / scale;
@@ -345,26 +346,24 @@ export default function FloorPlanDesigner() {
    * ──────────────────────────────────────────────────────── */
   return (
     <div className="h-full flex overflow-hidden select-none">
-      {/* ───────────────── Sidebar / Palette ───────────────── */}
-      <aside className="w-64 bg-glass p-4 space-y-3 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700">
-        <h2 className="font-bold">Palette</h2>
+      <aside className="w-64 bg-white/20 backdrop-blur-2xl p-4 space-y-3 rounded-xl shadow-xl overflow-y-auto border border-white/30 relative z-20">
+        <h2 className="font-extrabold text-gray-800 text-3xl mb-2">Palette</h2>
 
         {Object.keys(shelfDefs).map(t => (
           <Button
             key={t}
-            className="bg-sky-500 hover:bg-sky-600 text-white font-bold w-full p-2 rounded"
+            className="w-full px-4 py-2 rounded-xl text-lg font-semibold text-white bg-gradient-to-r from-sky-500 to-blue-500 shadow-lg border border-white/30 backdrop-blur-md hover:brightness-110 transition duration-200"
             onClick={() => addShelf(t as ShelfType)}
           >
             + {shelfDefs[t as ShelfType].name}
           </Button>
         ))}
 
-        <h3 className="font-semibold mt-2">Sections</h3>
+        <h3 className="font-bold text-gray-700 text-3xl mt-4">Sections</h3>
         {zonePalette.map(z => (
           <Button
             key={z.name}
-            variant="secondary"
-            className="w-full"
+            className={`w-full px-4 py-2 rounded-xl border border-white/20 backdrop-blur-md bg-white/50 shadow !text-gray-600 hover:!text-white hover:bg-sky/20 transition duration-200`}
             onClick={() => addZone(z.name, z.color)}
           >
             + {z.name}
@@ -372,49 +371,83 @@ export default function FloorPlanDesigner() {
         ))}
 
         <Button
-          variant={placingRoad ? 'primary' : 'secondary'}
-          className="w-full mt-3"
-          onClick={() => { setPlacingRoad(!placingRoad); clearSel('none'); }}
+          className={`w-full px-4 py-2 rounded-xl text-black/70 text-lg font-semibold mt-4 shadow-lg backdrop-blur-md transition duration-200 ${
+            placingRoad
+              ? 'bg-red-500 hover:bg-red-600 border border-white/30'
+              : 'bg-green-700 text-white-50 border border-white/20 hover:bg-green-800 hover:text-white/80'
+          }`}
+          onClick={() => {
+            setPlacingRoad(!placingRoad)
+            clearSel('none')
+          }}
         >
           {placingRoad ? 'Cancel Path' : 'Add Path'}
         </Button>
 
-        <Button variant="primary" className="w-full" onClick={handleSaveLayout}>
+        <Button
+          className="w-full px-4 py-2 mt-2 rounded-xl text-lg font-bold text-white bg-gradient-to-r from-blue-500 to-indigo-500 shadow-lg border border-white/30 backdrop-blur-md hover:brightness-110 transition duration-200"
+          onClick={handleSaveLayout}
+        >
           Save Layout
         </Button>
 
-        {/* D-pad & link for road extension */}
         {selRoadId && (
           <div className="grid grid-cols-3 gap-0.5 w-max mx-auto mt-3">
             <div />
-            <Button variant="secondary" className="w-10 h-10 rounded-b-none"
-                    onClick={() => extendRoad('up')}><ChevronUp size={18}/></Button>
-            <div />
-            <Button variant="secondary" className="w-10 h-10 rounded-r-none"
-                    onClick={() => extendRoad('left')}><ChevronLeft size={18}/></Button>
-            <Button variant="secondary" className="w-10 h-10"
-                    onClick={() => setRoadGroup(collectRoad(selRoadId, roads))}>
-              <Link2 size={16}/>
+            <Button
+              className="w-10 h-10 bg-white/30 !text-black hover:!bg-gray-300 hover:!text-white !shadow rounded-b-none"
+              variant="secondary"
+              onClick={() => extendRoad('up')}
+            >
+              <ChevronUp size={18} />
             </Button>
-            <Button variant="secondary" className="w-10 h-10 rounded-l-none"
-                    onClick={() => extendRoad('right')}><ChevronRight size={18}/></Button>
             <div />
-            <Button variant="secondary" className="w-10 h-10 rounded-t-none"
-                    onClick={() => extendRoad('down')}><ChevronDown size={18}/></Button>
+
+            <Button
+              className="w-10 h-10 bg-white/30 !text-black hover:!bg-gray-300 hover:!text-white !shadow rounded-r-none"
+              variant="secondary"
+              onClick={() => extendRoad('left')}
+            >
+              <ChevronLeft size={18} />
+            </Button>
+            <Button
+              className="w-10 h-10 bg-white/30 !text-black hover:!bg-gray-300 hover:!text-white !shadow"
+              variant="secondary"
+              onClick={() => setRoadGroup(collectRoad(selRoadId, roads))}
+            >
+              <Link2 size={16} />
+            </Button>
+            <Button
+              className="w-10 h-10 bg-white/30 !text-black hover:!bg-gray-300 hover:!text-white !shadow rounded-l-none"
+              variant="secondary"
+              onClick={() => extendRoad('right')}
+            >
+              <ChevronRight size={18} />
+            </Button>
+
+            <div />
+            <Button
+              className="w-10 h-10 bg-white/30 !text-black hover:!bg-gray-300 hover:!text-white !shadow rounded-t-none"
+              variant="secondary"
+              onClick={() => extendRoad('down')}
+            >
+              <ChevronDown size={18} />
+            </Button>
             <div />
           </div>
         )}
 
+
         {(selShelf || selZoneId || selRoadId) && (
           <Button
-            className="w-full mt-3 flex items-center justify-center gap-2
-                       bg-red-600 hover:bg-red-700 text-white"
+            className="w-full mt-3 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-xl shadow"
             onClick={deleteSel}
           >
-            <Trash size={16}/> Delete
+            <Trash size={16} /> Delete
           </Button>
         )}
       </aside>
+
 
       {/* ───────────────── Canvas wrapper ───────────────── */}
       <div
@@ -450,7 +483,7 @@ export default function FloorPlanDesigner() {
         {/* pan / zoom surface */}
         <div
           ref={canvasRef}
-          className="relative w-full h-full overflow-visible z-10"
+          className="absolute top-0 left-0 w-full h-full overflow-visible z-10"
           onClick={placeRoadStart}
           style={{
             transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`,
@@ -458,6 +491,7 @@ export default function FloorPlanDesigner() {
             transition: 'transform 80ms ease-out',
           }}
         >
+
           {/* ──────────── zones ──────────── */}
           {zones.map(z => (
             <DraggableBox
