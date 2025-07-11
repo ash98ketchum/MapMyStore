@@ -315,8 +315,7 @@ export default function MapNavigation() {
 
 
   return (
-    <div className="phone-frame relative overflow-hidden flex flex-col h-full">
-      {/* Header & Search */}
+    <div className="phone-frame relative overflow-hidden flex flex-col h-full bg-[#0C1C33]">      {/* Header & Search */}
       <div className="relative z-50 bg-glass backdrop-blur-md border-b border-glass p-4">
         <div className="flex items-center mb-3">
           <Link to="/customer/home">
@@ -376,8 +375,8 @@ export default function MapNavigation() {
             backgroundImage: `
               repeating-linear-gradient(0deg,transparent 0 19px,#153055 19px 20px),
               repeating-linear-gradient(90deg,transparent 0 19px,#153055 19px 20px),
-              repeating-linear-gradient(0deg,transparent 0 99px,#1d3b63 99px 100px),
-              repeating-linear-gradient(90deg,transparent 0 99px,#1d3b63 99px 100px)
+              repeating-linear-gradient(0deg,transparent 0 19px,#1B3F6D 19px 20px),
+               repeating-linear-gradient(90deg,transparent 0 19px,#1B3F6D 19px 20px),
             `
           }}
         />
