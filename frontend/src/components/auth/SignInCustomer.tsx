@@ -21,7 +21,7 @@ const SignInCustomer: React.FC = () => {
     try {
       const res = await axios.post('http://localhost:4000/signin', { email, password, role });
       localStorage.setItem('token', res.data.token);
-      navigate(role === 'admin' ? '/admin' : '/customer/home');
+      navigate(role === 'admin' ? '/admin' : '/customer');
     } catch (err: any) {
       console.error('Signin customer error →', err);
       if (err.response) {

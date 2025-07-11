@@ -1,3 +1,5 @@
+import scrollbarHide from 'tailwind-scrollbar-hide';
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
@@ -13,14 +15,14 @@ export default {
           900: '#101014',
         },
         accent: {
-          DEFAULT: '#00D3FF', // Sky Blue
+          DEFAULT: '#00D3FF',
           50: '#e6f9ff',
           100: '#b3ecff',
           500: '#00D3FF',
           600: '#00b8e6',
         },
         highlight: {
-          DEFAULT: '#7F00FF', // Purple used in gradient
+          DEFAULT: '#7F00FF',
           50: '#f3e8ff',
           100: '#e9d5ff',
           500: '#7F00FF',
@@ -31,7 +33,7 @@ export default {
         glass: {
           DEFAULT: 'rgba(255, 255, 255, 0.1)',
           dark: 'rgba(0, 0, 0, 0.2)',
-        }
+        },
       },
       backgroundImage: {
         'hero-gradient': 'linear-gradient(to right, #f8f9ff, #fef6ff, #f1faff)',
@@ -62,5 +64,5 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [scrollbarHide],
 };

@@ -1,4 +1,3 @@
-// src/App.tsx
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 
@@ -16,6 +15,7 @@ import ProductLocationManager from './pages/admin/ProductLocationManager';
 import DiscountCreator from './pages/admin/DiscountCreator';
 import BeaconManager from './pages/admin/BeaconManager';
 
+import LaunchScreen from './pages/customer/LaunchScreen'; // 👈 NEW
 import Welcome from './pages/customer/Welcome';
 import Home from './pages/customer/Home';
 import MapNavigation from './pages/customer/MapNavigation';
@@ -48,14 +48,17 @@ function App() {
           </Route>
 
           {/* Customer Dashboard */}
+          <Route path="/customer" element={<Navigate to="/customer/launch" replace />} /> {/* 👈 Redirect root */}
           <Route path="/customer" element={<CustomerLayout />}>
-            <Route index element={<Welcome />} />
+            <Route path="launch" element={<LaunchScreen />} /> {/* 👈 NEW */}
+            <Route path="welcome" element={<Welcome />} />
             <Route path="home" element={<Home />} />
             <Route path="map" element={<MapNavigation />} />
             <Route path="product/:id" element={<ProductDetail />} />
             <Route path="cart" element={<SmartCart />} />
           </Route>
 
+          {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </CartProvider>

@@ -22,7 +22,8 @@ const Welcome = () => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-br from-primary via-primary to-gray-900">
+     <div className="flex flex-col h-full w-full pt-8 px-4 bg-gradient-to-br from-primary to-gray-900 overflow-hidden">
+
       {/* Header */}
       <div className="p-6 text-center">
         <motion.div
