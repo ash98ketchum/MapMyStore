@@ -6,16 +6,18 @@
     "zoneId": "zone-W4Y7eSOExNSkec2Tt6t0x",
     "status": "online",
     "x": 859.5726694447711,
-    "y": 245.44827934047325
+    "y": 245.44827934047325,
+    "batteryLevel": null
   },
   {
     "id": "Tv8HeEW6j-rQAHli4z8cJ",
     "name": "Shyam's checkout",
     "type": "qr",
     "zoneId": "zone-5fGSloy1WQzirdfk_m8ML",
-    "status": "offline",
+    "status": "online",
     "x": 859.5726694447711,
-    "y": 245.44827934047325
+    "y": 245.44827934047325,
+    "batteryLevel": null
   },
   {
     "id": "v3gUm4cgZdFBphUduwKwc",
@@ -24,16 +26,18 @@
     "zoneId": "zone-gB9w5lSVtEE8lcHHm9MbV",
     "status": "online",
     "x": 635.5726694447711,
-    "y": 245.44827934047325
+    "y": 245.44827934047325,
+    "batteryLevel": null
   },
   {
     "id": "Q8VuFZp-2-8hGV1ozvdZs",
     "name": "End Cap 3",
     "type": "ble",
     "zoneId": "zone-9xhVEdeI8afShs00U4AuD",
-    "status": "offline",
+    "status": "online",
     "x": 219.57266944477112,
-    "y": 53.44827934047328
+    "y": 53.44827934047328,
+    "batteryLevel": null
   },
   {
     "id": "ld9B6WgDyYFcHrYGncR7n",
@@ -42,7 +46,8 @@
     "zoneId": "zone-9xhVEdeI8afShs00U4AuD",
     "status": "online",
     "x": 219.57266944477112,
-    "y": 245.44827934047328
+    "y": 245.44827934047328,
+    "batteryLevel": null
   },
   {
     "id": "WTHop3vKxRVK9jgs8p9J8",
@@ -51,7 +56,8 @@
     "zoneId": "zone-J_YrnAYKNzcYqNOIlSYKP",
     "status": "online",
     "x": 667.5726694447711,
-    "y": -42.55172065952672
+    "y": -42.55172065952672,
+    "batteryLevel": null
   },
   {
     "id": "47eQb0YIrE6rpL3SIAcGh",
@@ -60,7 +66,8 @@
     "zoneId": "zone-J_YrnAYKNzcYqNOIlSYKP",
     "status": "online",
     "x": 539.5726694447711,
-    "y": 21.448279340473277
+    "y": 21.448279340473277,
+    "batteryLevel": null
   },
   {
     "id": "XF3Ond57KDuQBIjJDhBNd",
@@ -69,7 +76,8 @@
     "zoneId": "zone-gB9w5lSVtEE8lcHHm9MbV",
     "status": "online",
     "x": 507.5726694447711,
-    "y": 245.44827934047325
+    "y": 245.44827934047325,
+    "batteryLevel": null
   },
   {
     "id": "8OO7VtP5zgi5wWHydae6x",
@@ -78,7 +86,8 @@
     "zoneId": "zone-3qisLfbfx_Jvn4-XvhVM0",
     "status": "online",
     "x": 443.5726694447711,
-    "y": 245.44827934047325
+    "y": 245.44827934047325,
+    "batteryLevel": null
   },
   {
     "id": "v79V0MYo018O73W76Qfnh",
@@ -87,7 +96,8 @@
     "zoneId": "zone-gAED8Z24SVsGoyUnZ-QX4",
     "status": "online",
     "x": 859.5726694447711,
-    "y": 53.44827934047328
+    "y": 53.44827934047328,
+    "batteryLevel": null
   },
   {
     "id": "_T90m2RUoD77MXq7CFeR3",
@@ -96,7 +106,8 @@
     "zoneId": "zone-3qisLfbfx_Jvn4-XvhVM0",
     "status": "online",
     "x": 571.5726694447711,
-    "y": 245.44827934047325
+    "y": 245.44827934047325,
+    "batteryLevel": null
   },
   {
     "id": "W_HREyDN9or6RUHcl-VW_",
@@ -105,6 +116,7 @@
     "zoneId": "zone-J_YrnAYKNzcYqNOIlSYKP",
     "status": "online",
     "x": 219.57266944477112,
-    "y": 21.448279340473277
+    "y": 21.448279340473277,
+    "batteryLevel": null
   }
 ]

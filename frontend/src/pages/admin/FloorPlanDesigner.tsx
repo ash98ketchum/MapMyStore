@@ -352,18 +352,18 @@ export default function FloorPlanDesigner() {
         {Object.keys(shelfDefs).map(t => (
           <Button
             key={t}
-            className="w-full px-4 py-2 rounded-xl text-lg font-semibold text-white bg-gradient-to-r from-sky-500 to-blue-500 shadow-lg border border-white/30 backdrop-blur-md hover:brightness-110 transition duration-200"
+            className="w-full px-4 py-2 rounded-xl text-lg font-semibold text-black bg-gradient-to-r from-sky-500 to-blue-500 shadow-lg border border-white/30 backdrop-blur-md hover:brightness-110 transition duration-200"
             onClick={() => addShelf(t as ShelfType)}
           >
             + {shelfDefs[t as ShelfType].name}
           </Button>
         ))}
 
-        <h3 className="font-bold text-gray-700 text-3xl mt-4">Sections</h3>
+        <h3 className="font-bold text-black text-3xl mt-4">Sections</h3>
         {zonePalette.map(z => (
           <Button
             key={z.name}
-            className={`w-full px-4 py-2 rounded-xl border border-white/20 backdrop-blur-md bg-white/50 shadow !text-gray-600 hover:!text-white hover:bg-sky/20 transition duration-200`}
+            className={`w-full px-4 py-2 rounded-xl border border-white/20 backdrop-blur-md bg-white/50 shadow !text-black hover:!text-white hover:bg-sky/20 transition duration-200`}
             onClick={() => addZone(z.name, z.color)}
           >
             + {z.name}
@@ -385,7 +385,7 @@ export default function FloorPlanDesigner() {
         </Button>
 
         <Button
-          className="w-full px-4 py-2 mt-2 rounded-xl text-lg font-bold text-white bg-gradient-to-r from-blue-500 to-indigo-500 shadow-lg border border-white/30 backdrop-blur-md hover:brightness-110 transition duration-200"
+          className="w-full px-4 py-2 mt-2 rounded-xl text-lg font-bold text-black bg-gradient-to-r from-blue-500 to-indigo-500 shadow-lg border border-white/30 backdrop-blur-md hover:brightness-110 transition duration-200"
           onClick={handleSaveLayout}
         >
           Save Layout
@@ -440,11 +440,13 @@ export default function FloorPlanDesigner() {
 
         {(selShelf || selZoneId || selRoadId) && (
           <Button
-            className="w-full mt-3 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-xl shadow"
-            onClick={deleteSel}
-          >
-            <Trash size={16} /> Delete
-          </Button>
+  className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-xl !shadow"
+  onClick={deleteSel}
+>
+  <Trash size={16} /> Delete
+</Button>
+
+
         )}
       </aside>
 
@@ -581,15 +583,16 @@ export default function FloorPlanDesigner() {
 
       {/* ───────────────── Shelf side-panel ───────────────── */}
       {selShelf && (
-        <div className="w-80 bg-white/10 border-l border-white/20 text-white p-4 space-y-4 backdrop-blur">
+        <div className="w-80 bg-white/90 border-l border-gray-200 text-black p-4 space-y-4 backdrop-blur-sm shadow-xl rounded-xl">
           <div className="flex justify-between items-center">
             <h3 className="font-bold text-lg">Edit Shelf</h3>
             <Button
-              size="icon"
-              variant="secondary"
-              icon={<X className="h-4 w-4 text-white" />}
-              onClick={() => setSelShelf(null)}
-            />
+  size="icon"
+  className="bg-red-600 hover:bg-red-700 text-white"
+  icon={<X className="h-4 w-4" />}
+  onClick={() => setSelShelf(null)}
+/>
+
           </div>
 
           {/* label (rename) */}
@@ -645,14 +648,15 @@ export default function FloorPlanDesigner() {
                             type="number" min={1}
                             value={p.qty}
                             onChange={e => setQty(p.productId, Math.max(1, +e.target.value))}
-                            className="w-14 bg-glass border border-glass rounded text-right px-1 py-0.5"
+                            className="w-16 border border-gray-300 rounded px-1 py-0.5 text-right text-black bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                           />
                           <Button
-                            variant="secondary"
-                            size="icon"
-                            icon={<Trash size={12} />}
-                            onClick={() => delProd(p.productId)}
-                          />
+  size="icon"
+  className="bg-red-600 hover:bg-red-700 text-white"
+  icon={<Trash size={12} />}
+  onClick={() => delProd(p.productId)}
+/>
+
                         </span>
                       </li>
                     );

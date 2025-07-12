@@ -29,21 +29,25 @@ export default function ProductLocationManager() {
       try {
         const locs: LocationRecord[] = await fetch('/api/product-locations').then(r => r.json());
         setShelves(locs);
+        console.log("MOCK PRODUCTS:", mockProducts);
 
         const prods: Product[] = locs.map(loc => {
-          const meta = mockProducts.find(p => p.id === loc.productId) || {
-            id: loc.productId,
-            name: 'Unknown',
-            sku: '—',
-            category: '—',
-          };
-          return {
-            ...meta,
-            shelfId: loc.shelfId,
-            stock: loc.quantity,
-          };
-        });
+        const meta = mockProducts.find(p => p.id === loc.productId);
+        console.log("Meta for", loc.productId, "→", meta);
+        return {
+          id: loc.productId,
+          name: meta?.name || 'Unknown',
+          sku: meta?.sku || '—',
+          category: meta?.category || '—',
+          imageUrl: meta?.imageUrl || '', 
+          shelfId: loc.shelfId,
+          stock: loc.quantity,
+        };
+      });
+
         setProducts(prods);
+        console.log("Product Images Check:", prods.map(p => [p.name, p.imageUrl]));
+
       } catch (err) {
         console.error(err);
       }
@@ -74,13 +78,16 @@ export default function ProductLocationManager() {
     setShelves(locs);
     setProducts(
       locs.map(loc => {
-        const meta = mockProducts.find(p => p.id === loc.productId) || {
+        const meta = mockProducts.find(p => p.id === loc.productId);
+        return {
           id: loc.productId,
-          name: 'Unknown',
-          sku: '—',
-          category: '—',
+          name: meta?.name || 'Unknown',
+          sku: meta?.sku || '—',
+          category: meta?.category || '—',
+          imageUrl: meta?.imageUrl || '',
+          shelfId: loc.shelfId,
+          stock: loc.quantity,
         };
-        return { ...meta, shelfId: loc.shelfId, stock: loc.quantity };
       })
     );
     setEditingProduct(null);
@@ -132,18 +139,33 @@ export default function ProductLocationManager() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredProducts.map((product, i) => {
           const shelf = getShelf(product.shelfId);
+          console.log("Rendering Product:", product.name, "→", product.imageUrl);
+
           return (
             <motion.div
               key={product.id}
-              className="rounded-2xl p-6 bg-white-300 backdrop-blur-lg border border-white/20 shadow-md transition-all duration-300 hover:shadow-xl hover:scale-105 hover:border-gray/50 hover:bg-gray-300 opacity-60 hover:opacity-10"
+              className="rounded-2xl p-6 bg-white backdrop-blur-lg border border-white/20 shadow-md transition-all duration-300 hover:shadow-xl hover:scale-105"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.04 }}
             >
               <div className="flex items-center mb-4 space-x-4">
-                <div className="w-14 h-14 bg-white/50 rounded-xl flex items-center justify-center">
+                <div className="w-14 h-14 rounded-xl overflow-hidden bg-white/30 flex items-center justify-center">
+                  {product.imageUrl ? (
+                    <img
+                    src={product.imageUrl}
+                    alt={product.name}
+                    className="w-full h-full object-contain"
+                    onError={(e) => {
+                      console.log('Image failed for', product.name);
+                      (e.target as HTMLImageElement).src = 'https://via.placeholder.com/100';
+                    }}
+                  />
+                ) : (
                   <Package className="h-7 w-7 text-black/80" />
+                  )}
                 </div>
+
                 <div>
                   <p className="text-xl font-semibold text-black">{product.name}</p>
                   <p className="text-base text-black/60 font-mono">{product.sku}</p>

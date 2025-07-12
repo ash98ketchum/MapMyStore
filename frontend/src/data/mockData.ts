@@ -23,7 +23,7 @@ export const mockProducts: Product[] = [
   { id: '4', name: 'Aashirvaad Atta', category: 'Groceries', sku: 'ATT001', shelfId: 'shelf-4', stock: 18,imageUrl:'https://www.bbassets.com/media/uploads/p/l/126906_10-aashirvaad-atta-whole-wheat.jpg' },
   { id: '5', name: 'TATA Salt', category: 'Groceries', sku: 'SLT001', shelfId: 'shelf-5', stock: 40,imageUrl:'https://m.media-amazon.com/images/I/614mm2hYHyL.jpg' },
   { id: '6', name: 'Fortune Oil', category: 'Groceries', sku: 'OIL001', shelfId: 'shelf-6', stock: 22, imageUrl:'https://freshclub.co.in/cdn/shop/products/Screenshot2022-10-26145311.jpg?v=1666776395' },
-  { id: '7', name: 'Basmati Rice', category: 'Groceries', sku: 'RIC001', shelfId: 'shelf-7', stock: 30,imageUrl:'https://eu.dookan.com/cdn/shop/files/India_Gate_Extra_Long_Basmati_Rice_-Excel_5kg-500px.png?v=1716552716' },
+  { id: '7', name: 'Basmati Rice', category: 'Groceries', sku: 'RIC001', shelfId: 'shelf-7', stock: 30,imageUrl:'https://indischwindisch.com/wp-content/uploads/2023/10/Boiled-rice-3-1.jpg' },
   { id: '8', name: 'Red Chili Powder', category: 'Groceries', sku: 'CHL001', shelfId: 'shelf-8', stock: 15,imageUrl:'https://m.media-amazon.com/images/I/81W2CBbvERL.jpg' },
   { id: '9', name: 'Turmeric Powder', category: 'Groceries', sku: 'TRM001', shelfId: 'shelf-9', stock: 12,imageUrl:'https://m.media-amazon.com/images/I/41ZT+xOOaYL.UF350,350_QL80.jpg' },
   { id: '10', name: 'Maggi Noodles', category: 'Groceries', sku: 'MGG001', shelfId: 'shelf-10', stock: 35,imageUrl:'https://www.madewithnestle.ca/sites/default/files/masala_cdn_3dsm.png' },
