@@ -448,29 +448,67 @@ app.post("/api/save-cart", async (req, res) => {
 // ------------chatbot-------------------------------------------------
 const axios = require("axios");
 
+// Optional: store history in memory (for prototype/demo)
+// In production, store per-user in a DB or Redis
+let chatHistory = [];
+
+const systemMessage = {
+  role: "system",
+  content: `
+You are Leo, the helpful AI assistant for the smart retail app 'MapMyStore'. 
+Your job is to assist users in navigating the store, finding products, understanding deals, and learning how to use features like smart beacons, QR scanning, and product suggestions.
+
+Make your answers dynamic and concise. Avoid repeating yourself. Think like a smart in-store guide. Answer with relevant information only based on what the user asks.
+
+If you're unsure, say "Let me check that for you!" rather than hallucinating.
+
+Do **not** reintroduce yourself (e.g. don't say "I'm Leo") more than once. Only introduce yourself in the **very first** message.
+
+Here are a few things you know:
+- The app shows store maps with live zones.
+- Beacons detect user position for personalized suggestions.
+- Users can scan QR codes for product details.
+- Admins can view heatmaps and search stats.
+- Smart discounts are offered when users enter zones.
+
+Example: 
+User: "Where can I find dairy products?"
+You: "Dairy is in Zone C. Just follow the blue path on your map!"
+
+User: "How does the QR scan work?"
+You: "Tap the scanner icon, point at any shelf QR, and I’ll show you product details instantly."
+
+Always use a helpful, cheerful tone without being overly repetitive.
+Avoid:
+❌ Repeating your name or role
+❌ Greeting the user repeatedly
+✅ Stay focused, informative, and concise
+  `,
+};
+
 app.post("/api/chat", async (req, res) => {
   const { message } = req.body;
+
   if (!message || typeof message !== "string") {
     return res.status(400).json({ error: "Message is required" });
   }
+
+  // Limit chat history to last 10 messages for performance
+  const limitedHistory = chatHistory.slice(-10);
+
+  // Build message list for LLM
+  const messages =
+  chatHistory.length === 0
+    ? [systemMessage, { role: "user", content: message }]
+    : [...limitedHistory, { role: "user", content: message }];
 
   try {
     const response = await axios.post(
       "https://api.groq.com/openai/v1/chat/completions",
       {
         model: "llama3-70b-8192",
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are Leo, a friendly and helpful AI chatbot for MapMyStore. Always assist the customer in a kind, fun, and helpful way.",
-          },
-          {
-            role: "user",
-            content: message,
-          },
-        ],
-        temperature: 0.7,
+        messages,
+        temperature: 0.6,
       },
       {
         headers: {
@@ -481,12 +519,14 @@ app.post("/api/chat", async (req, res) => {
     );
 
     const reply = response.data.choices[0].message.content;
+
+    // Push to memory (in-memory store for now)
+    chatHistory.push({ role: "user", content: message });
+    chatHistory.push({ role: "assistant", content: reply });
+
     res.json({ reply });
   } catch (err) {
-    console.error(
-      "[groq-chat-error]",
-      err?.response?.data || err.message || err
-    );
+    console.error("[groq-chat-error]", err?.response?.data || err.message || err);
     res.status(500).json({ error: "Leo is having a thinking error 🧠💥" });
   }
 });
