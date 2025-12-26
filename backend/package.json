@@ -3,9 +3,11 @@
   "private": true,
   "type": "commonjs",
   "scripts": {
-    "start": "node server.cjs",
-    "prisma:generate": "npx prisma generate --schema=prisma/schema.prisma"
-  },
+    "prisma:generate": "node node_modules/prisma/build/index.js generate --schema=prisma/schema.prisma",
+    "start": "node server.cjs"
+  }
+
+,
   "dependencies": {
     "@prisma/client": "^6.19.1",
     "axios": "^1.10.0",
