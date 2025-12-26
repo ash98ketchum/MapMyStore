@@ -1,23 +1,25 @@
 {
+  "name": "mapmystore-backend",
+  "private": true,
+  "type": "commonjs",
   "scripts": {
-  "dev": "node server.cjs",
-  "build": "echo 'build skipped'",
-  "start": "node server.cjs",
-  "postinstall": "prisma generate",
-  "prisma:generate": "prisma generate",
-  "prisma:migrate": "prisma migrate deploy"
-},
+    "prisma:generate": "node node_modules/prisma/build/index.js generate --schema=prisma/schema.prisma",
+    "start": "node server.cjs"
+  },
   "dependencies": {
-    "@prisma/client": "5.22.0",
+    "@prisma/client": "^6.19.1",
     "axios": "^1.10.0",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
-    "express": "^4.19.2",
+    "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "zod": "^3.25.67"
   },
   "devDependencies": {
-    "prisma": "5.22.0"
+    "prisma": "^6.19.1"
+  },
+  "engines": {
+    "node": "20.x"
   }
 }
