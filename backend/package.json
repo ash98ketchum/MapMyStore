@@ -1,12 +1,12 @@
 {
-  "name": "backend",
+  "name": "mapmystore-backend",
   "private": true,
   "type": "commonjs",
   "engines": {
     "node": "20.x"
   },
   "scripts": {
-    "build": "npm install && npx prisma generate --schema=prisma/schema.prisma",
+    "build": "npx prisma generate --schema=prisma/schema.prisma",
     "start": "node server.cjs"
   },
   "dependencies": {
