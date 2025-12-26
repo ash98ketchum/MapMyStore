@@ -6,7 +6,7 @@ import { ArrowLeft, Package, Navigation } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Layout, Position, Road, Beacon, DiscountRule } from '../../types';
 import { mockProducts } from '../../data/mockData';
-
+import { api } from '../../config.ts';
 /*──────────────────────────────────────────────────────────*/
 /*  Configuration                                           */
 /*──────────────────────────────────────────────────────────*/
@@ -71,17 +71,17 @@ export default function MapNavigation() {
 
   /* ── Fetch layout, beacons & discounts ───────────────── */
   useEffect(() => {
-    fetch('/api/layout')
+    fetch(api('/api/layout'))
       .then(r => r.ok ? r.json() : Promise.reject())
       .then(setLayout)
       .catch(() => {});
 
-    fetch('/api/beacons')
+    fetch(api('/api/beacons'))
       .then(r => r.ok ? r.json() : Promise.reject())
       .then((b: Beacon[]) => setBeacons(b.filter(x => x.status === 'online')))
       .catch(() => {});
 
-    fetch('/api/discount-rules')
+    fetch(api('/api/discount-rules'))
       .then(r => r.ok ? r.json() : Promise.reject())
       .then((dr: DiscountRule[]) => setDiscountRules(dr.filter(r => r.active)))
       .catch(() => {});
@@ -270,7 +270,7 @@ export default function MapNavigation() {
 
     // If discount, fire API
     if (popup.type === 'discount' && popup.rule) {
-      await fetch('/api/apply-discount', {
+      await fetch(api('/api/apply-discount'), {
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ ruleId: popup.rule.id })

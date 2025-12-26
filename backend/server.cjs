@@ -27,6 +27,16 @@ const SEARCH_FILE = path.join(DATA_DIR, "searchCounts.json");
 const DISCOUNT_FILE = path.join(DATA_DIR, "discount-rules.json");
 const TAKEN_FILE = path.join(DATA_DIR, "discount-taken.json");
 
+if (!process.env.JWT_SECRET) {
+  console.error("❌ JWT_SECRET missing");
+  process.exit(1);
+}
+
+if (!process.env.GROQ_API_KEY) {
+  console.error("❌ GROQ_API_KEY missing");
+  process.exit(1);
+}
+
 /// ensure data files exist
 (async () => {
   await fsp.mkdir(DATA_DIR, { recursive: true });
@@ -41,7 +51,13 @@ const TAKEN_FILE = path.join(DATA_DIR, "discount-taken.json");
   }
 })();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL || true,
+    credentials: true,
+  })
+);
+
 app.use(express.json({ limit: "2mb" }));
 
 /* ───── tiny helpers ───── */
@@ -531,6 +547,15 @@ app.post("/api/chat", async (req, res) => {
     res.status(500).json({ error: "Leo is having a thinking error 🧠💥" });
   }
 });
+
+if (process.env.NODE_ENV === 'production') {
+  const clientPath = path.join(__dirname, '../frontend/dist');
+  app.use(express.static(clientPath));
+
+  app.get('*', (_, res) => {
+    res.sendFile(path.join(clientPath, 'index.html'));
+  });
+}
 
 /* ═════════ START SERVER ═════════ */
 const PORT = process.env.PORT || 4000;

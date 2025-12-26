@@ -20,7 +20,7 @@ import {
 import {
   mockShelves, mockZones, mockProducts,
 } from '../../data/mockData';
-
+import { api } from '../../config.ts';
 /* ──────────────────────────────────────────────────────────
  *  Visual constants
  * ────────────────────────────────────────────────────────── */
@@ -127,7 +127,7 @@ export default function FloorPlanDesigner() {
 
   /* ─── LOAD saved layout on mount ─── */
   useEffect(() => {
-    fetch('/api/layout')
+    fetch(api('/api/layout'))
       .then(r => (r.ok ? r.json() : Promise.reject()))
       .then(l => {
         setScale(l.scale);
@@ -287,7 +287,7 @@ export default function FloorPlanDesigner() {
     };
 
     try {
-      const res = await fetch('/api/layout', {
+      const res = await fetch(api('/api/layout'), {
         method : 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body   : JSON.stringify(payload),

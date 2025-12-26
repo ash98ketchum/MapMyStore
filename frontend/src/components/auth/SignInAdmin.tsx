@@ -1,9 +1,11 @@
+//src/components/auth/SignInAdmin.tsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Eye, EyeOff } from 'lucide-react';
 import GlassCard from '../ui/GlassCard';
 import Button from '../ui/Button';
+import api from "../../lib/api";
 
 const SignInAdmin: React.FC = () => {
   const navigate = useNavigate();
@@ -17,7 +19,7 @@ const SignInAdmin: React.FC = () => {
     const password = data.get('password')?.toString() || '';
 
     try {
-      const res = await axios.post('http://localhost:4000/signin', {
+      const res = await axios.post('/signin', {
         email,
         password,
         role: 'admin'

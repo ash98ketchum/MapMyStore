@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import Button from '../../components/ui/Button';
 import GlassCard from '../../components/ui/GlassCard';
 import { useCart, CartItem } from '../../pages/customer/CartContext';
-
+import { api } from '../../config.ts';
 const SmartCart: React.FC = () => {
   const { cartItems, updateQuantity, removeItem } = useCart();
 
@@ -15,7 +15,7 @@ const SmartCart: React.FC = () => {
 
   const handleCheckout = async () => {
   try {
-    const res = await fetch('http://localhost:4000/api/save-cart', {
+    const res = await fetch(api('/api/save-cart'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(cartItems),

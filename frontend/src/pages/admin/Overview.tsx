@@ -4,6 +4,7 @@ import { TrendingUp, Users, MapPin, Zap, ArrowRight } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import GlassCard from '../../components/ui/GlassCard';
 import Button from '../../components/ui/Button';
+import { api } from '../../config.ts';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
@@ -25,7 +26,7 @@ const Overview = () => {
   const [topSearches, setTopSearches] = useState<string[]>([]);
 
   useEffect(() => {
-    fetch('http://localhost:4000/api/customers/count')
+    fetch(api('/api/customers/count'))
       .then(res => res.json())
       .then(data => setCustomerCount(data.total || 0))
       .catch(() => setCustomerCount(0));
@@ -34,7 +35,7 @@ const Overview = () => {
   useEffect(() => {
     const fetchTopSearches = async () => {
       try {
-        const res = await fetch("http://localhost:4000/api/search/top?" + Date.now());
+        const res = await fetch(api("/api/search/top?" + Date.now()));
         const data = await res.json();
         setTopSearches(data.topSearches || []);
       } catch (err) {

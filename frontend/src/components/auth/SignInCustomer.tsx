@@ -4,6 +4,7 @@ import axios from 'axios';
 import { Eye, EyeOff } from 'lucide-react';
 import GlassCard from '../ui/GlassCard';
 import Button from '../ui/Button';
+import api from "../../lib/api";
 
 const SignInCustomer: React.FC = () => {
   const navigate = useNavigate();
@@ -19,7 +20,7 @@ const SignInCustomer: React.FC = () => {
     const role     = isAdmin ? 'admin' : 'customer';
 
     try {
-      const res = await axios.post('http://localhost:4000/signin', { email, password, role });
+      const res = await axios.post('/signin', { email, password, role });
       localStorage.setItem('token', res.data.token);
       navigate(role === 'admin' ? '/admin' : '/customer');
     } catch (err: any) {

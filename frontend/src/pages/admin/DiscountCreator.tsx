@@ -6,6 +6,7 @@ import { Plus, Play, Square, Trash2, Zap } from 'lucide-react';
 import GlassCard from '../../components/ui/GlassCard';
 import Button    from '../../components/ui/Button';
 import { DiscountRule } from '../../types';
+import { api } from '../../config.ts';
 
 type RulePayload = {
   name: string;
@@ -49,7 +50,7 @@ export default function DiscountCreator() {
 
   // ── fetch rules ────────────────────────────────────────
   useEffect(() => {
-    fetch('/api/discount-rules')
+    fetch(api('/api/discount-rules'))
       .then(r => r.json())
       .then((data: DiscountRule[]) => setRules(data))
       .catch(console.error)
@@ -58,7 +59,7 @@ export default function DiscountCreator() {
 
   // ── fetch online beacons ───────────────────────────────
   useEffect(() => {
-    fetch('/api/beacons')
+    fetch(api('/api/beacons'))
       .then(r => r.json())
       .then((data: any[]) => setBeacons(data.filter(b => b.status === 'online')))
       .catch(console.error);
@@ -68,7 +69,7 @@ export default function DiscountCreator() {
   const toggleRule = async (id:string, active:boolean) => {
     setRules(rs => rs.map(r => r.id===id ? { ...r, active: !active } : r));
     try {
-      await fetch(`/api/discount-rules/${id}`, {
+      await fetch(api(`/api/discount-rules/${id}`), {
         method:'PATCH',
         headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ active: !active }),
@@ -84,10 +85,10 @@ export default function DiscountCreator() {
     if (!confirm('Delete this rule?')) return;
     setRules(rs => rs.filter(r => r.id !== id));
     try {
-      await fetch(`/api/discount-rules/${id}`, { method:'DELETE' });
+      await fetch(api(`/api/discount-rules/${id}`), { method:'DELETE' });
     } catch {
       // reload on error
-      fetch('/api/discount-rules')
+      fetch(api('/api/discount-rules'))
         .then(r => r.json())
         .then((d:DiscountRule[]) => setRules(d));
     }
@@ -111,7 +112,7 @@ export default function DiscountCreator() {
       active:    newRule.active!,
     };
     try {
-      const res = await fetch('/api/discount-rules', {
+      const res = await fetch(api('/api/discount-rules'), {
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body: JSON.stringify(payload),

@@ -8,6 +8,7 @@ import Button from '../../components/ui/Button';
 import GlassCard from '../../components/ui/GlassCard';
 import { mockProducts, mockShelves } from '../../data/mockData';
 import { useCart, CartItem } from '../../pages/customer/CartContext';
+import { api } from '../../config.ts';
 
 const ProductDetail = () => {
   const { addToCart, cartItems } = useCart();

@@ -7,7 +7,7 @@ import GlassCard from '../../components/ui/GlassCard';
 import Button from '../../components/ui/Button';
 import { mockProducts } from '../../data/mockData';
 import { Product } from '../../types';
-
+import { api } from '../../config.ts';
 interface LocationRecord {
   productId: string;
   quantity: number;
@@ -27,7 +27,7 @@ export default function ProductLocationManager() {
   useEffect(() => {
     (async () => {
       try {
-        const locs: LocationRecord[] = await fetch('/api/product-locations').then(r => r.json());
+        const locs: LocationRecord[] = await fetch(api('/api/product-locations')).then(r => r.json());
         setShelves(locs);
         console.log("MOCK PRODUCTS:", mockProducts);
 
@@ -65,7 +65,7 @@ export default function ProductLocationManager() {
   });
 
   const updateProduct = async (prod: Product) => {
-    await fetch('/api/product-locations', {
+    await fetch(api('/api/product-locations'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -74,7 +74,7 @@ export default function ProductLocationManager() {
         qty: prod.stock,
       }),
     });
-    const locs: LocationRecord[] = await fetch('/api/product-locations').then(r => r.json());
+    const locs: LocationRecord[] = await fetch(api('/api/product-locations')).then(r => r.json());
     setShelves(locs);
     setProducts(
       locs.map(loc => {

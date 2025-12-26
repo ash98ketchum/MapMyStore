@@ -4,6 +4,7 @@ import axios from 'axios';
 import { Eye, EyeOff } from 'lucide-react';
 import GlassCard from '../ui/GlassCard';
 import Button from '../ui/Button';
+import api from "../../lib/api";
 
 const SignUpAdmin: React.FC = () => {
   const navigate = useNavigate();
@@ -21,7 +22,7 @@ const SignUpAdmin: React.FC = () => {
 
     try {
       // ← point at your running backend on port 4000
-      await axios.post('http://localhost:4000/signup', {
+      await axios.post('/signup', {
         fullName,
         email,
         password,

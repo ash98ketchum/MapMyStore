@@ -13,6 +13,7 @@ import GlassCard from '../../components/ui/GlassCard';
 import Button    from '../../components/ui/Button';
 
 import { mockShelves } from '../../data/mockData';
+import { api } from '../../config.ts';
 import { Beacon } from '../../types';
 
 /* helpers */
@@ -33,8 +34,8 @@ export default function BeaconManager() {
   const [zoneNames, setZoneNames] = useState<Record<string,string>>({ unassigned:'–' });
 
   useEffect(()=>{
-    fetch('/api/beacons').then(r=>r.ok?r.json():Promise.reject()).then(setBeacons);
-    fetch('/api/layout' ).then(r=>r.ok?r.json():Promise.reject()).then(l=>{
+    fetch(api('/api/beacons')).then(r=>r.ok?r.json():Promise.reject()).then(setBeacons);
+    fetch(api('/api/layout') ).then(r=>r.ok?r.json():Promise.reject()).then(l=>{
       const m:Record<string,string>={unassigned:'–'}; l.zones.forEach((z:{id:string;name:string})=>m[z.id]=z.name); setZoneNames(m);
     }).catch(()=>{});
   },[]);
@@ -55,7 +56,7 @@ export default function BeaconManager() {
   const toggle = async (b: Beacon) => {
     const nextStatus = b.status === 'online' ? 'offline' : 'online';
     try{
-      const res = await fetch(`/api/beacons/${b.id}`,{
+      const res = await fetch(api(`/api/beacons/${b.id}`),{
         method:'PATCH',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({status:nextStatus}),
