@@ -1,0 +1,10 @@
+[
+  {
+    "id": "5",
+    "name": "TATA Salt",
+    "category": "Groceries",
+    "quantity": 3,
+    "price": 4.99,
+    "shelfId": "shelf-5"
+  }
+]

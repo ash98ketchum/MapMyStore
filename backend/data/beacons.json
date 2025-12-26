@@ -4,7 +4,7 @@
     "name": "Ram's checkout",
     "type": "qr",
     "zoneId": "zone-W4Y7eSOExNSkec2Tt6t0x",
-    "status": "online",
+    "status": "offline",
     "x": 859.5726694447711,
     "y": 245.44827934047325,
     "batteryLevel": null
@@ -24,7 +24,7 @@
     "name": "oil",
     "type": "ble",
     "zoneId": "zone-gB9w5lSVtEE8lcHHm9MbV",
-    "status": "online",
+    "status": "offline",
     "x": 635.5726694447711,
     "y": 245.44827934047325,
     "batteryLevel": null
@@ -94,7 +94,7 @@
     "name": "Aisle 21",
     "type": "ble",
     "zoneId": "zone-gAED8Z24SVsGoyUnZ-QX4",
-    "status": "online",
+    "status": "offline",
     "x": 859.5726694447711,
     "y": 53.44827934047328,
     "batteryLevel": null
@@ -104,7 +104,7 @@
     "name": "End Cap 3",
     "type": "ble",
     "zoneId": "zone-3qisLfbfx_Jvn4-XvhVM0",
-    "status": "online",
+    "status": "offline",
     "x": 571.5726694447711,
     "y": 245.44827934047325,
     "batteryLevel": null
@@ -114,7 +114,7 @@
     "name": "white cement",
     "type": "ble",
     "zoneId": "zone-J_YrnAYKNzcYqNOIlSYKP",
-    "status": "online",
+    "status": "offline",
     "x": 219.57266944477112,
     "y": 21.448279340473277,
     "batteryLevel": null
