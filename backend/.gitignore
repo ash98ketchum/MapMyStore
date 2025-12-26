@@ -1,12 +1,3 @@
-# Ignore all node_modules
-node_modules/*
-
-# Allow only Prisma runtime & client (required for Render)
-!node_modules/.prisma
-!node_modules/@prisma/client
-
-# Never commit env files
+node_modules
 .env
-
-# Ignore generated folders (safe)
 generated/prisma
