@@ -6,7 +6,7 @@
     "node": "20.x"
   },
   "scripts": {
-    "build": "npx prisma generate --schema=prisma/schema.prisma",
+    "build": "node node_modules/prisma/build/index.js generate --schema=prisma/schema.prisma",
     "start": "node server.cjs"
   },
   "dependencies": {
