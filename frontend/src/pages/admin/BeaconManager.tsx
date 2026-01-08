@@ -13,7 +13,8 @@ import GlassCard from '../../components/ui/GlassCard';
 import Button    from '../../components/ui/Button';
 
 import { mockShelves } from '../../data/mockData';
-import { api } from '../../config.ts';
+import api from '../../lib/api';
+
 import { Beacon } from '../../types';
 
 /* helpers */
@@ -33,12 +34,28 @@ export default function BeaconManager() {
   const [beacons,   setBeacons]   = useState<Beacon[]>([]);
   const [zoneNames, setZoneNames] = useState<Record<string,string>>({ unassigned:'–' });
 
-  useEffect(()=>{
-    fetch(api('/api/beacons')).then(r=>r.ok?r.json():Promise.reject()).then(setBeacons);
-    fetch(api('/api/layout') ).then(r=>r.ok?r.json():Promise.reject()).then(l=>{
-      const m:Record<string,string>={unassigned:'–'}; l.zones.forEach((z:{id:string;name:string})=>m[z.id]=z.name); setZoneNames(m);
-    }).catch(()=>{});
-  },[]);
+  useEffect(() => {
+  const load = async () => {
+    try {
+      const beaconsRes = await api.get('/api/beacons');
+      setBeacons(beaconsRes.data);
+
+      const layoutRes = await api.get('/api/layout');
+      const l = layoutRes.data;
+
+      const m: Record<string, string> = { unassigned: '–' };
+      l.zones.forEach((z: { id: string; name: string }) => {
+        m[z.id] = z.name;
+      });
+      setZoneNames(m);
+    } catch (e) {
+      console.error('Failed to load layout/beacons', e);
+    }
+  };
+
+  load();
+}, []);
+
 
   /* BLE scan / assign state (unchanged) */
   const [scanModal,setScanModal]=useState(false);
@@ -54,20 +71,24 @@ export default function BeaconManager() {
 
   /* toggle status & persist */
   const toggle = async (b: Beacon) => {
-    const nextStatus = b.status === 'online' ? 'offline' : 'online';
-    try{
-      const res = await fetch(api(`/api/beacons/${b.id}`),{
-        method:'PATCH',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({status:nextStatus}),
-      });
-      if(!res.ok) throw new Error('patch failed');
-      setBeacons(list=>list.map(x=>x.id===b.id?{...x,status:nextStatus}:x));
-    }catch(err){
-      console.warn('[toggle]',err);
-      alert('Failed to update status');
-    }
-  };
+  const nextStatus = b.status === 'online' ? 'offline' : 'online';
+
+  try {
+    await api.patch(`/api/beacons/${b.id}`, {
+      status: nextStatus,
+    });
+
+    setBeacons(list =>
+      list.map(x =>
+        x.id === b.id ? { ...x, status: nextStatus } : x
+      )
+    );
+  } catch (err) {
+    console.warn('[toggle]', err);
+    alert('Failed to update status');
+  }
+};
+
 
   /* save assignment (local only) */
   const saveAssignment=()=>{/* unchanged */};

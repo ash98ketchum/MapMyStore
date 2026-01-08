@@ -4,7 +4,8 @@ import axios from 'axios';
 import { Eye, EyeOff } from 'lucide-react';
 import GlassCard from '../ui/GlassCard';
 import Button from '../ui/Button';
-import api from "../../lib/api";
+import api from '../../lib/api';
+
 
 const SignUpCustomer: React.FC = () => {
   const navigate = useNavigate();
@@ -23,7 +24,7 @@ const SignUpCustomer: React.FC = () => {
     const password = data.get('password')?.toString() || '';
 
     try {
-      await axios.post('/signup', {
+      await axios.post(api('/signup'), {
         fullName,
         email,
         password,

@@ -6,7 +6,7 @@ import { Plus, Play, Square, Trash2, Zap } from 'lucide-react';
 import GlassCard from '../../components/ui/GlassCard';
 import Button    from '../../components/ui/Button';
 import { DiscountRule } from '../../types';
-import { api } from '../../config.ts';
+import api from '../../lib/api';
 
 type RulePayload = {
   name: string;

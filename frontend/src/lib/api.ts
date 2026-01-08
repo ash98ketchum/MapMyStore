@@ -1,12 +1,11 @@
 import axios from "axios";
-import { API_BASE_URL } from "../config";
+import config from "../config";
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: config.API_BASE_URL,
   withCredentials: true,
 });
 
-// Attach JWT automatically
 api.interceptors.request.use((req) => {
   const token = localStorage.getItem("token");
   if (token) {
@@ -15,7 +14,6 @@ api.interceptors.request.use((req) => {
   return req;
 });
 
-// Optional global auth handling
 api.interceptors.response.use(
   (res) => res,
   (err) => {
